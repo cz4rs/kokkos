@@ -103,41 +103,81 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     }
   }
 
+  template <class TagType>
+  inline static
+      typename std::enable_if<std::is_same<TagType, void>::value>::type
+      exec(const FunctorType& functor, const Member iwork) {
+    functor(iwork);
+  }
+
+  template <class TagType>
+  inline static
+      typename std::enable_if<!std::is_same<TagType, void>::value>::type
+      exec(const FunctorType& functor, const Member iwork) {
+    const TagType t{};
+    functor(t, iwork);
+  }
+
  public:
   inline void execute() const {
-    enum {
-      is_dynamic = std::is_same<typename Policy::schedule_type::type,
-                                Kokkos::Dynamic>::value
-    };
-
     if (OpenMP::in_parallel()) {
       exec_range<WorkTag>(m_functor, m_policy.begin(), m_policy.end());
-    } else {
-      OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
+      return;
+    }
 
+    OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
+    execute_impl<Policy>();
+  }
+
+  template <class Policy>
+  typename std::enable_if<std::is_same<typename Policy::schedule_type::type,
+                                       Kokkos::Dynamic>::value>::type
+  execute_impl() const {
 #pragma omp parallel num_threads(OpenMP::impl_thread_pool_size())
-      {
-        HostThreadTeamData& data = *(m_instance->get_thread_data());
+    {
+      HostThreadTeamData& data = *(m_instance->get_thread_data());
 
-        data.set_work_partition(m_policy.end() - m_policy.begin(),
-                                m_policy.chunk_size());
+      data.set_work_partition(m_policy.end() - m_policy.begin(),
+                              m_policy.chunk_size());
 
-        if (is_dynamic) {
-          // Make sure work partition is set before stealing
-          if (data.pool_rendezvous()) data.pool_rendezvous_release();
-        }
+      // Make sure work partition is set before stealing
+      if (data.pool_rendezvous()) data.pool_rendezvous_release();
 
-        std::pair<int64_t, int64_t> range(0, 0);
+      std::pair<int64_t, int64_t> range(0, 0);
 
-        do {
-          range = is_dynamic ? data.get_work_stealing_chunk()
-                             : data.get_work_partition();
+      do {
+        range = data.get_work_stealing_chunk();
 
-          ParallelFor::template exec_range<WorkTag>(
-              m_functor, range.first + m_policy.begin(),
-              range.second + m_policy.begin());
+        ParallelFor::template exec_range<WorkTag>(
+            m_functor, range.first + m_policy.begin(),
+            range.second + m_policy.begin());
 
-        } while (is_dynamic && 0 <= range.first);
+      } while (0 <= range.first);
+    }
+  }
+
+  template <class Policy>
+  typename std::enable_if<!std::is_same<typename Policy::schedule_type::type,
+                                        Kokkos::Dynamic>::value>::type
+  execute_impl() const {
+#pragma omp parallel num_threads(OpenMP::impl_thread_pool_size())
+    {
+      HostThreadTeamData& data = *(m_instance->get_thread_data());
+
+      data.set_work_partition(m_policy.end() - m_policy.begin(),
+                              m_policy.chunk_size());
+
+      auto range = data.get_work_partition();
+      auto ibeg  = range.first + m_policy.begin();
+      auto iend  = range.second + m_policy.begin();
+
+#ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
+#ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
+#pragma ivdep
+#endif
+#endif
+      for (Member iwork = ibeg; iwork < iend; ++iwork) {
+        ParallelFor::template exec<WorkTag>(m_functor, iwork);
       }
     }
   }
