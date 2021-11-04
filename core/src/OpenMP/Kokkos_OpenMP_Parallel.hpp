@@ -77,6 +77,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
       typename std::enable_if<std::is_same<TagType, void>::value>::type
       exec_range(const FunctorType& functor, const Member ibeg,
                  const Member iend) {
+    printf("    >>>> [exec_range] ibeg, iend: (%ld, %ld)\n", ibeg, iend);
 #ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
 #pragma ivdep
@@ -92,6 +93,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
       typename std::enable_if<!std::is_same<TagType, void>::value>::type
       exec_range(const FunctorType& functor, const Member ibeg,
                  const Member iend) {
+    printf("    >>>> [exec_range] ibeg, iend: (%ld, %ld)\n", ibeg, iend);
     const TagType t{};
 #ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
@@ -109,6 +111,12 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
       is_dynamic = std::is_same<typename Policy::schedule_type::type,
                                 Kokkos::Dynamic>::value
     };
+
+    if (is_dynamic) {
+      printf("    >>>> Policy::schedule_type: dynamic\n");
+    } else {
+      printf("    >>>> Policy::schedule_type: static\n");
+    }
 
     if (OpenMP::in_parallel()) {
       exec_range<WorkTag>(m_functor, m_policy.begin(), m_policy.end());
@@ -132,7 +140,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
         do {
           range = is_dynamic ? data.get_work_stealing_chunk()
                              : data.get_work_partition();
-
+          printf("    >>>> [scheduling] range: (%ld, %ld)\n", range.first,
+                 range.second);
           ParallelFor::template exec_range<WorkTag>(
               m_functor, range.first + m_policy.begin(),
               range.second + m_policy.begin());
