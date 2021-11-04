@@ -114,7 +114,7 @@ struct ReduceFunctor {
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   {
-    const int N = 10;
+    const int N = 1003;
 
     // Allocate the View.  The first dimension is a run-time parameter
     // N.  We set N = 10 here.  The second dimension is a compile-time
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
     //
     // The string "A" is just the label; it only matters for debugging.
     // Different Views may have the same label.
-    view_type a("A", N);
+    view_type a("scheduling-details", N);
 
     Kokkos::parallel_for(N, InitView(a));
     double sum = 0;
