@@ -56,6 +56,7 @@
 
 #include <Kokkos_Core.hpp>
 #include <cstdio>
+#include "Kokkos_Core_fwd.hpp"
 
 // A Kokkos::View is an array of zero or more dimensions.  The number
 // of dimensions is specified at compile time, as part of the type of
@@ -134,6 +135,36 @@ int main(int argc, char* argv[]) {
     view_type a("scheduling-details", N);
 
     Kokkos::parallel_for(N, InitView(a));
+    double sum = 0;
+    Kokkos::parallel_reduce(N, ReduceFunctor(a), sum);
+    printf("Result: %f\n", sum);
+  }  // use this scope to ensure the lifetime of "A" ends before finalize
+
+  {
+    const int N = 1003;
+
+    // Allocate the View.  The first dimension is a run-time parameter
+    // N.  We set N = 10 here.  The second dimension is a compile-time
+    // parameter, 3.  We don't specify it here because we already set it
+    // by declaring the type of the View.
+    //
+    // Views get initialized to zero by default.  This happens in
+    // parallel, using the View's memory space's default execution
+    // space.  Parallel initialization ensures first-touch allocation.
+    // There is a way to shut off default initialization.
+    //
+    // You may NOT allocate a View inside of a parallel_{for, reduce,
+    // scan}.  Treat View allocation as a "thread collective."
+    //
+    // The string "A" is just the label; it only matters for debugging.
+    // Different Views may have the same label.
+    view_type a("scheduling-details", N);
+
+//Kokkos::Schedule<Kokkos::Dynamic>;
+  //using t_policy = Kokkos::TeamPolicy<ScheduleType, IndexType>;
+    using policy_t =
+        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Schedule<Kokkos::Dynamic> >;
+    Kokkos::parallel_for(policy_t(0,N), InitView(a));
     double sum = 0;
     Kokkos::parallel_reduce(N, ReduceFunctor(a), sum);
     printf("Result: %f\n", sum);
