@@ -140,8 +140,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
         do {
           range = is_dynamic ? data.get_work_stealing_chunk()
                              : data.get_work_partition();
-          printf("    >>>> [scheduling] range: (%ld, %ld)\n", range.first,
-                 range.second);
+          // printf("    >>>> [scheduling] range: (%ld, %ld)\n", range.first,
+          //  range.second);
           ParallelFor::template exec_range<WorkTag>(
               m_functor, range.first + m_policy.begin(),
               range.second + m_policy.begin());
