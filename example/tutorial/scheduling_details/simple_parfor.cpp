@@ -42,18 +42,6 @@
 //@HEADER
 */
 
-//
-// First Kokkos::View (multidimensional array) example:
-//   1. Start up Kokkos
-//   2. Allocate a Kokkos::View
-//   3. Execute a parallel_for over that View's data
-//   4. Shut down Kokkos
-//
-// Compare this example to 03_simple_view_lambda, which uses C++11
-// lambdas to define the loop bodies of the parallel_for and
-// parallel_reduce.
-//
-
 #include <Kokkos_Core.hpp>
 #include <cstdio>
 
@@ -75,22 +63,39 @@ struct SimpleFunctor {
 };
 
 int main(int argc, char* argv[]) {
+  int N        = 1003;   // view size
+  bool dynamic = false;  // use dynamic scheduling
+
+  // Read command line arguments.
+  for (int i = 0; i < argc; i++) {
+    if (strcmp(argv[i], "-N") == 0) {
+      N = atoi(argv[++i]);
+      printf("  User N is %d\n", N);
+    } else if (strcmp(argv[i], "-d") == 0) {
+      dynamic = true;
+      printf("  Using static schedule type.\n");
+    } else if ((strcmp(argv[i], "-h") == 0) ||
+               (strcmp(argv[i], "-help") == 0)) {
+      printf("Run a simple Kokkos::parallel_for example.\n\nOptions:\n");
+      printf("  -N <int>:    range size\n");
+      printf("  -d:    use dynamic schedule type\n");
+      printf("  -h:    print this message\n\n");
+      exit(1);
+    }
+  }
+
   Kokkos::initialize(argc, argv);
 
-  // {
-  //   const int N = 1003;
-  //   view_type a("scheduling-details-static", N);
-
-  //   Kokkos::parallel_for(N, SimpleFunctor(a));
-  // }
-
   {
-    const int N = 33;
-    view_type a("scheduling-details-dynamic", N);
-    using policy_t = Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace,
-                                         Kokkos::Schedule<Kokkos::Dynamic> >;
+    view_type a("scheduling-details", N);
 
-    Kokkos::parallel_for(policy_t(0, N), SimpleFunctor(a));
+    if (dynamic) {
+      using policy_t = Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace,
+                                           Kokkos::Schedule<Kokkos::Dynamic> >;
+      Kokkos::parallel_for(policy_t(0, N), SimpleFunctor(a));
+    } else {
+      Kokkos::parallel_for(N, SimpleFunctor(a));
+    }
   }
 
   Kokkos::finalize();
