@@ -125,6 +125,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
       return;
     }
 
+    printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
+    printf("    >>>> chunk_size:\t%ld\n", m_policy.chunk_size());
     OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
     execute_impl<Policy>();
   }
@@ -133,6 +135,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   typename std::enable_if<std::is_same<typename Policy::schedule_type::type,
                                        Kokkos::Dynamic>::value>::type
   execute_impl() const {
+    printf("    >>>> Policy::schedule_type: dynamic\n");
 #pragma omp parallel num_threads(OpenMP::impl_thread_pool_size())
     {
       HostThreadTeamData& data = *(m_instance->get_thread_data());
@@ -160,6 +163,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   typename std::enable_if<!std::is_same<typename Policy::schedule_type::type,
                                         Kokkos::Dynamic>::value>::type
   execute_impl() const {
+    printf("    >>>> Policy::schedule_type: static\n");
 #pragma omp parallel num_threads(OpenMP::impl_thread_pool_size())
     {
       HostThreadTeamData& data = *(m_instance->get_thread_data());
@@ -170,7 +174,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
       auto range = data.get_work_partition();
       auto ibeg  = range.first + m_policy.begin();
       auto iend  = range.second + m_policy.begin();
-
+      printf("    [exec_range] ibeg, iend: (%ld, %ld)\tthreadnum:  (%d)\n",
+             ibeg, iend, omp_get_thread_num());
 #ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
 #pragma ivdep
