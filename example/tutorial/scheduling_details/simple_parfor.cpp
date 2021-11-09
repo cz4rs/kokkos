@@ -73,7 +73,6 @@ int main(int argc, char* argv[]) {
       printf("  User N is %d\n", N);
     } else if (strcmp(argv[i], "-d") == 0) {
       dynamic = true;
-      printf("  Using static schedule type.\n");
     } else if ((strcmp(argv[i], "-h") == 0) ||
                (strcmp(argv[i], "-help") == 0)) {
       printf("Run a simple Kokkos::parallel_for example.\n\nOptions:\n");
