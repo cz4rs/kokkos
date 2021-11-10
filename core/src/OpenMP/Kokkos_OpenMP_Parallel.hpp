@@ -83,6 +83,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
 #endif
 #endif
     for (Member iwork = ibeg; iwork < iend; ++iwork) {
+      printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n", static_cast<long>(iwork),
+        omp_get_thread_num());
       functor(iwork);
     }
   }
@@ -107,7 +109,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   inline static
       typename std::enable_if<std::is_same<TagType, void>::value>::type
       exec(const FunctorType& functor, const Member iwork) {
-    printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n", iwork,
+    printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n", static_cast<long>(iwork),
            omp_get_thread_num());
     functor(iwork);
   }
@@ -128,7 +130,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     }
 
     printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
-    printf("    >>>> chunk_size:\t%ld\n", m_policy.chunk_size());
+    printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
     OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
     execute_impl<Policy>();
   }
