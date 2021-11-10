@@ -109,8 +109,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   inline static
       typename std::enable_if<std::is_same<TagType, void>::value>::type
       exec(const FunctorType& functor, const Member iwork) {
-    printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n",
-           static_cast<long>(iwork), omp_get_thread_num());
+    // printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n",
+    //        static_cast<long>(iwork), omp_get_thread_num());
     functor(iwork);
   }
 
@@ -143,7 +143,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
 
-#pragma omp parallel for schedule(dynamic) \
+#pragma omp parallel for schedule(dynamic, m_policy.chunk_size()) \
     num_threads(OpenMP::impl_thread_pool_size())
     {
 #ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
@@ -165,7 +165,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
 
-#pragma omp parallel for schedule(static) \
+#pragma omp parallel for schedule(static, m_policy.chunk_size()) \
     num_threads(OpenMP::impl_thread_pool_size())
     {
 #ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
