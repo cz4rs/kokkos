@@ -83,8 +83,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
 #endif
 #endif
     for (Member iwork = ibeg; iwork < iend; ++iwork) {
-      printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n", static_cast<long>(iwork),
-        omp_get_thread_num());
+      printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n",
+             static_cast<long>(iwork), omp_get_thread_num());
       functor(iwork);
     }
   }
@@ -109,8 +109,8 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   inline static
       typename std::enable_if<std::is_same<TagType, void>::value>::type
       exec(const FunctorType& functor, const Member iwork) {
-    printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n", static_cast<long>(iwork),
-           omp_get_thread_num());
+    printf("    [exec] iwork: %ld\tthreadnum:  (%d)\n",
+           static_cast<long>(iwork), omp_get_thread_num());
     functor(iwork);
   }
 
@@ -140,26 +140,20 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
                                        Kokkos::Dynamic>::value>::type
   execute_impl() const {
     printf("    >>>> Policy::schedule_type: dynamic\n");
-#pragma omp parallel num_threads(OpenMP::impl_thread_pool_size())
+    auto ibeg = m_policy.begin();
+    auto iend = m_policy.end();
+
+#pragma omp parallel for schedule(dynamic) \
+    num_threads(OpenMP::impl_thread_pool_size())
     {
-      HostThreadTeamData& data = *(m_instance->get_thread_data());
-
-      data.set_work_partition(m_policy.end() - m_policy.begin(),
-                              m_policy.chunk_size());
-
-      // Make sure work partition is set before stealing
-      if (data.pool_rendezvous()) data.pool_rendezvous_release();
-
-      std::pair<int64_t, int64_t> range(0, 0);
-
-      do {
-        range = data.get_work_stealing_chunk();
-
-        ParallelFor::template exec_range<WorkTag>(
-            m_functor, range.first + m_policy.begin(),
-            range.second + m_policy.begin());
-
-      } while (0 <= range.first);
+#ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
+#ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
+#pragma ivdep
+#endif
+#endif
+      for (Member iwork = ibeg; iwork < iend; ++iwork) {
+        ParallelFor::template exec<WorkTag>(m_functor, iwork);
+      }
     }
   }
 
