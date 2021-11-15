@@ -145,15 +145,13 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
 
 #pragma omp parallel for schedule(dynamic, m_policy.chunk_size()) \
     num_threads(OpenMP::impl_thread_pool_size())
-    {
 #ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
 #pragma ivdep
 #endif
 #endif
-      for (Member iwork = ibeg; iwork < iend; ++iwork) {
-        ParallelFor::template exec<WorkTag>(m_functor, iwork);
-      }
+    for (Member iwork = ibeg; iwork < iend; ++iwork) {
+      ParallelFor::template exec<WorkTag>(m_functor, iwork);
     }
   }
 
@@ -167,15 +165,13 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
 
 #pragma omp parallel for schedule(static, m_policy.chunk_size()) \
     num_threads(OpenMP::impl_thread_pool_size())
-    {
 #ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
 #ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
 #pragma ivdep
 #endif
 #endif
-      for (Member iwork = ibeg; iwork < iend; ++iwork) {
-        ParallelFor::template exec<WorkTag>(m_functor, iwork);
-      }
+    for (Member iwork = ibeg; iwork < iend; ++iwork) {
+      ParallelFor::template exec<WorkTag>(m_functor, iwork);
     }
   }
 

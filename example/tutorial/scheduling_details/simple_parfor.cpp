@@ -44,6 +44,7 @@
 
 #include <Kokkos_Core.hpp>
 #include <cstdio>
+#include <string>
 
 using view_type = Kokkos::View<int*>;
 
@@ -91,10 +92,12 @@ int main(int argc, char* argv[]) {
     }
 
     // PRINT VISUALISATION OF WORK
-    std::vector<std::string> strings(8, std::string());
+    auto num_threads = Kokkos::OpenMP::impl_thread_pool_size();
+    std::vector<std::string> strings(num_threads, std::string());
 
-    for (int i = 0; i < 8; i++)  // rows represent threads
+    for (int i = 0; i < num_threads; i++)  // rows represent threads
     {
+      strings[i] = "[thread " + std::to_string(i) + "] ";
       for (int j = 0; j < N; j++)  // columns represent iterations (iwork)
       {
         if (view(j) == i) {
@@ -105,11 +108,9 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    std::cout << "horizontal -> iterations, vertical \\/ threads" << std::endl;
     for (auto& s : strings) {
       std::cout << s << "\n";
     }
-    std::cout << std::endl;
   }
 
   Kokkos::finalize();
