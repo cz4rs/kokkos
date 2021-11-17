@@ -122,23 +122,10 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     functor(t, iwork);
   }
 
- public:
-  inline void execute() const {
-    if (OpenMP::in_parallel()) {
-      exec_range<WorkTag>(m_functor, m_policy.begin(), m_policy.end());
-      return;
-    }
-
-    printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
-    printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
-    OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
-    execute_impl<Policy>();
-  }
-
   template <class Policy>
   typename std::enable_if<std::is_same<typename Policy::schedule_type::type,
                                        Kokkos::Dynamic>::value>::type
-  execute_impl() const {
+  execute_parallel() const {
     printf("    >>>> Policy::schedule_type: dynamic\n");
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
@@ -158,7 +145,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   template <class Policy>
   typename std::enable_if<!std::is_same<typename Policy::schedule_type::type,
                                         Kokkos::Dynamic>::value>::type
-  execute_impl() const {
+  execute_parallel() const {
     printf("    >>>> Policy::schedule_type: static\n");
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
@@ -173,6 +160,19 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     for (Member iwork = ibeg; iwork < iend; ++iwork) {
       ParallelFor::template exec<WorkTag>(m_functor, iwork);
     }
+  }
+
+ public:
+  inline void execute() const {
+    if (OpenMP::in_parallel()) {
+      exec_range<WorkTag>(m_functor, m_policy.begin(), m_policy.end());
+      return;
+    }
+
+    printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
+    printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
+    OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
+    execute_parallel<Policy>();
   }
 
   inline ParallelFor(const FunctorType& arg_functor, Policy arg_policy)
