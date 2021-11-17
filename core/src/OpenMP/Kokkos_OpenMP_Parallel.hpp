@@ -215,6 +215,11 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     }
   }
 
+  inline static void exec(const MDRangePolicy& mdr_policy,
+                          const FunctorType& functor, const Member iwork) {
+    iterate_type(mdr_policy, functor)(iwork);
+  }
+
  public:
   inline void execute() const {
     enum {
@@ -228,31 +233,21 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     } else {
       OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
 
-#pragma omp parallel num_threads(OpenMP::impl_thread_pool_size())
-      {
-        HostThreadTeamData& data = *(m_instance->get_thread_data());
+      // FIXME: check is_dynamic
+      printf("    >>>> Policy::schedule_type: dynamic\n");
+      auto ibeg = m_policy.begin();
+      auto iend = m_policy.end();
 
-        data.set_work_partition(m_policy.end() - m_policy.begin(),
-                                m_policy.chunk_size());
-
-        if (is_dynamic) {
-          // Make sure work partition is set before stealing
-          if (data.pool_rendezvous()) data.pool_rendezvous_release();
-        }
-
-        std::pair<int64_t, int64_t> range(0, 0);
-
-        do {
-          range = is_dynamic ? data.get_work_stealing_chunk()
-                             : data.get_work_partition();
-
-          ParallelFor::exec_range(m_mdr_policy, m_functor,
-                                  range.first + m_policy.begin(),
-                                  range.second + m_policy.begin());
-
-        } while (is_dynamic && 0 <= range.first);
+#pragma omp parallel for schedule(dynamic, m_policy.chunk_size()) \
+    num_threads(OpenMP::impl_thread_pool_size())
+#ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
+#ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
+#pragma ivdep
+#endif
+#endif
+      for (Member iwork = ibeg; iwork < iend; ++iwork) {
+        exec(m_mdr_policy, m_functor, iwork);
       }
-      // END #pragma omp parallel
     }
   }
 
