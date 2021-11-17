@@ -44,22 +44,17 @@
 
 #include <Kokkos_Core.hpp>
 #include <cstdio>
+#include <string>
 
-using view_type = Kokkos::View<double * [3]>;
+using view_type = Kokkos::View<int*>;
 
 struct SimpleFunctor {
-  view_type a;
+  view_type view;
 
-  SimpleFunctor(view_type a_) : a(a_) {}
+  SimpleFunctor(view_type view_) : view(view_) {}
 
-  // Fill the View with some data.  The parallel_for loop will iterate
-  // over the View's first dimension N.
   KOKKOS_INLINE_FUNCTION
-  void operator()(const int i) const {
-    a(i, 0) = 1.0 * i;
-    a(i, 1) = 1.0 * i * i;
-    a(i, 2) = 1.0 * i * i * i;
-  }
+  void operator()(const int i) const { view(i) = omp_get_thread_num(); }
 };
 
 int main(int argc, char* argv[]) {
@@ -86,14 +81,35 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
 
   {
-    view_type a("scheduling-details", N);
+    view_type view("scheduling-details", N);
 
     if (dynamic) {
       using policy_t = Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace,
                                            Kokkos::Schedule<Kokkos::Dynamic> >;
-      Kokkos::parallel_for(policy_t(0, N), SimpleFunctor(a));
+      Kokkos::parallel_for(policy_t(0, N), SimpleFunctor(view));
     } else {
-      Kokkos::parallel_for(N, SimpleFunctor(a));
+      Kokkos::parallel_for(N, SimpleFunctor(view));
+    }
+
+    // PRINT VISUALISATION OF WORK
+    auto num_threads = Kokkos::OpenMP::impl_thread_pool_size();
+    std::vector<std::string> strings(num_threads, std::string());
+
+    for (int i = 0; i < num_threads; i++)  // rows represent threads
+    {
+      strings[i] = "[thread " + std::to_string(i) + "] ";
+      for (int j = 0; j < N; j++)  // columns represent iterations (iwork)
+      {
+        if (view(j) == i) {
+          strings[i] += "*";
+        } else {
+          strings[i] += " ";
+        }
+      }
+    }
+
+    for (auto& s : strings) {
+      std::cout << s << "\n";
     }
   }
 
