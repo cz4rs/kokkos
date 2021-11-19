@@ -220,23 +220,13 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
     iterate_type(mdr_policy, functor)(iwork);
   }
 
- public:
-  inline void execute() const {
-    enum {
-      is_dynamic = std::is_same<typename Policy::schedule_type::type,
-                                Kokkos::Dynamic>::value
-    };
-
-    if (OpenMP::in_parallel()) {
-      ParallelFor::exec_range(m_mdr_policy, m_functor, m_policy.begin(),
-                              m_policy.end());
-    } else {
-      OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
-
-      // FIXME: check is_dynamic
-      printf("    >>>> Policy::schedule_type: dynamic\n");
-      auto ibeg = m_policy.begin();
-      auto iend = m_policy.end();
+  template <class Policy>
+  typename std::enable_if<std::is_same<typename Policy::schedule_type::type,
+                                       Kokkos::Dynamic>::value>::type
+  execute_parallel() const {
+    printf("    >>>> Policy::schedule_type: dynamic\n");
+    auto ibeg = m_policy.begin();
+    auto iend = m_policy.end();
 
 #pragma omp parallel for schedule(dynamic, m_policy.chunk_size()) \
     num_threads(OpenMP::impl_thread_pool_size())
@@ -245,10 +235,43 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
 #pragma ivdep
 #endif
 #endif
-      for (Member iwork = ibeg; iwork < iend; ++iwork) {
-        exec(m_mdr_policy, m_functor, iwork);
-      }
+    for (Member iwork = ibeg; iwork < iend; ++iwork) {
+      exec(m_mdr_policy, m_functor, iwork);
     }
+  }
+
+  template <class Policy>
+  typename std::enable_if<!std::is_same<typename Policy::schedule_type::type,
+                                        Kokkos::Dynamic>::value>::type
+  execute_parallel() const {
+    printf("    >>>> Policy::schedule_type: static\n");
+    auto ibeg = m_policy.begin();
+    auto iend = m_policy.end();
+
+#pragma omp parallel for schedule(dynamic, m_policy.chunk_size()) \
+    num_threads(OpenMP::impl_thread_pool_size())
+#ifdef KOKKOS_ENABLE_AGGRESSIVE_VECTORIZATION
+#ifdef KOKKOS_ENABLE_PRAGMA_IVDEP
+#pragma ivdep
+#endif
+#endif
+    for (Member iwork = ibeg; iwork < iend; ++iwork) {
+      exec(m_mdr_policy, m_functor, iwork);
+    }
+  }
+
+ public:
+  inline void execute() const {
+    if (OpenMP::in_parallel()) {
+      ParallelFor::exec_range(m_mdr_policy, m_functor, m_policy.begin(),
+                              m_policy.end());
+      return;
+    }
+
+    printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
+    printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
+    OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
+    execute_parallel<Policy>();
   }
 
   inline ParallelFor(const FunctorType& arg_functor, MDRangePolicy arg_policy)
