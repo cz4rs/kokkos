@@ -173,6 +173,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
     printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
     OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
 #ifdef KOKKOS_ENABLE_NATIVE_OPENMP
+    printf("    >>>> KOKKOS_ENABLE_NATIVE_OPENMP=1\n");
     execute_parallel<Policy>();
 #else
     enum {
