@@ -126,7 +126,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   typename std::enable_if<std::is_same<typename Policy::schedule_type::type,
                                        Kokkos::Dynamic>::value>::type
   execute_parallel() const {
-    printf("    >>>> Policy::schedule_type: dynamic\n");
+    // printf("    >>>> Policy::schedule_type: dynamic\n");
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
 
@@ -146,7 +146,7 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
   typename std::enable_if<!std::is_same<typename Policy::schedule_type::type,
                                         Kokkos::Dynamic>::value>::type
   execute_parallel() const {
-    printf("    >>>> Policy::schedule_type: static\n");
+    // printf("    >>>> Policy::schedule_type: static\n");
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
 
@@ -169,11 +169,11 @@ class ParallelFor<FunctorType, Kokkos::RangePolicy<Traits...>, Kokkos::OpenMP> {
       return;
     }
 
-    printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
-    printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
+    // printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
+    // printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
     OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
 #ifdef KOKKOS_ENABLE_NATIVE_OPENMP
-    printf("    >>>> KOKKOS_ENABLE_NATIVE_OPENMP=1\n");
+    // printf("    >>>> KOKKOS_ENABLE_NATIVE_OPENMP=1\n");
     execute_parallel<Policy>();
 #else
     enum {
@@ -256,7 +256,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   typename std::enable_if<std::is_same<typename Policy::schedule_type::type,
                                        Kokkos::Dynamic>::value>::type
   execute_parallel() const {
-    printf("    >>>> Policy::schedule_type: dynamic\n");
+    // printf("    >>>> Policy::schedule_type: dynamic\n");
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
 
@@ -276,7 +276,7 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
   typename std::enable_if<!std::is_same<typename Policy::schedule_type::type,
                                         Kokkos::Dynamic>::value>::type
   execute_parallel() const {
-    printf("    >>>> Policy::schedule_type: static\n");
+    // printf("    >>>> Policy::schedule_type: static\n");
     auto ibeg = m_policy.begin();
     auto iend = m_policy.end();
 
@@ -300,8 +300,8 @@ class ParallelFor<FunctorType, Kokkos::MDRangePolicy<Traits...>,
       return;
     }
 
-    printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
-    printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
+    // printf("    >>>> num_threads:\t%d\n", OpenMP::impl_thread_pool_size());
+    // printf("    >>>> chunk_size:\t%ld\n", long(m_policy.chunk_size()));
     OpenMPExec::verify_is_master("Kokkos::OpenMP parallel_for");
     execute_parallel<Policy>();
   }
