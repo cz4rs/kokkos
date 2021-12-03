@@ -2,10 +2,10 @@
 
 # Kokkos
 if [ ! -d "kokkos" ]; then
-  git clone https://github.com/kokkos/kokkos
+  git clone https://github.com/NexGenAnalytics/kokkos
 fi
 cd kokkos
-git checkout develop
+git checkout refactor-openmp
 git pull
 cd ..
 
