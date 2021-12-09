@@ -57,6 +57,13 @@ struct SimpleFunctor {
   void operator()(const int i) const { view(i) = omp_get_thread_num(); }
 };
 
+// This example should be removed before merging (it's for WIP debugging and
+// visualization).
+// Use KOKKOS_ENABLE_NATIVE_OPENMP to switch OpenMP implementation.
+// You can run this with:
+// ./example/tutorial/scheduling_details/KokkosExample_scheduling_details -N 129
+// -d
+
 int main(int argc, char* argv[]) {
   int N        = 1003;   // view size
   bool dynamic = false;  // use dynamic scheduling
