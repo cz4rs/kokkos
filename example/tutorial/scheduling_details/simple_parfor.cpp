@@ -46,6 +46,8 @@
 #include <cstdio>
 #include <string>
 
+#if defined(KOKKOS_ENABLE_OPENMP)
+
 using view_type = Kokkos::View<int*>;
 
 struct SimpleFunctor {
@@ -122,3 +124,5 @@ int main(int argc, char* argv[]) {
 
   Kokkos::finalize();
 }
+
+#endif
