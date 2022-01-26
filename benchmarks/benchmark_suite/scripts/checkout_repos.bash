@@ -3,11 +3,11 @@
 # Kokkos
 if [ ! -d "kokkos" ]; then
   git clone https://github.com/NexGenAnalytics/kokkos
+  cd kokkos
+  git checkout develop
+  git pull
+  cd ..
 fi
-cd kokkos
-git checkout refactor-openmp
-git pull
-cd ..
 
 # KokkosKernels
 if [ ! -d "kokkos-kernels" ]; then
