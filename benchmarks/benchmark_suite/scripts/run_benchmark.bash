@@ -27,7 +27,7 @@ COMPILER: $($COMPILER --version | head -n 1)
 ${SCRIPT_PATH}/checkout_repos.bash
 ${SCRIPT_PATH}/build_code.bash --arch=${KOKKOS_ARCH} --device-list=${KOKKOS_DEVICES} --compiler=${COMPILER}
 logfile=$(get_logfile)
-for _ in {1..1}  # increase the range to run benchmark multiple times
+for _ in {1..5}  # increase the range to run benchmark multiple times
 do
   ${SCRIPT_PATH}/run_tests.bash | tee -a $logfile
 done
