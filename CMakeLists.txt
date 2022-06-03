@@ -168,6 +168,7 @@ ENDIF()
 IF(Kokkos_ENABLE_TESTS AND NOT KOKKOS_HAS_TRILINOS)
   find_package(GTest)
 ENDIF()
+add_subdirectory(tpls/benchmark)
 
 # Include a set of Kokkos-specific wrapper functions that
 # will either call raw CMake or TriBITS
