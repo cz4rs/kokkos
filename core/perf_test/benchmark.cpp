@@ -55,12 +55,20 @@ BENCHMARK(ViewDeepCopy_Rank8_Raw<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->Args({10, 1})
     ->Unit(benchmark::kSecond);
 
+
+std::string custom_context() {
+  std::ostringstream msg;
+  Kokkos::print_configuration(msg);
+  return msg.str();
+}
+
 // Run benchmarks
 // BENCHMARK_MAIN() + Kokkos init / finalize
 int main(int argc, char** argv) {
   ::benchmark::Initialize(&argc, argv);
-  Kokkos::initialize(argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
+  Kokkos::initialize(argc, argv);
+  ::benchmark::AddCustomContext("Kokkos configuration", custom_context());
 
   ::benchmark::RunSpecifiedBenchmarks();
   // REMOVE_ME: Run the vanilla test for comparison
