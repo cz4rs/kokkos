@@ -10,12 +10,14 @@ static void ViewDeepCopy_Rank8(benchmark::State& state) {
   // ...
   for (auto _ : state) {
     // This code gets timed
-    Test::run_deepcopyview_tests8<LayoutA, LayoutB>(10, 1);
+    Test::run_deepcopyview_tests8<LayoutA, LayoutB>(state.range(0),
+                                                    state.range(1));
   }
 }
 
-// Register the function as a benchmark
-BENCHMARK(ViewDeepCopy_Rank8<Kokkos::LayoutRight, Kokkos::LayoutLeft>);
+BENCHMARK(ViewDeepCopy_Rank8<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
+    ->ArgNames({"N", "R"})
+    ->Args({10, 1});
 
 // Run benchmarks
 // BENCHMARK_MAIN() + Kokkos init / finalize
