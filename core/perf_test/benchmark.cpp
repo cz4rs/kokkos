@@ -17,7 +17,8 @@ static void ViewDeepCopy_Rank8(benchmark::State& state) {
 
 BENCHMARK(ViewDeepCopy_Rank8<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->ArgNames({"N", "R"})
-    ->Args({10, 1});
+    ->Args({10, 1})
+    ->Unit(benchmark::kSecond);
 
 // Run benchmarks
 // BENCHMARK_MAIN() + Kokkos init / finalize
