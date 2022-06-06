@@ -16,7 +16,8 @@ static void ViewDeepCopy_Rank8(benchmark::State& state) {
   Kokkos::View<double********, LayoutB> b("B8", N1, N1, N1, N1, N1, N1, N1, N1);
 
   for (auto _ : state) {
-    Test::deepcopy_view(a, b, R);
+    const auto elapsed_seconds = Test::deepcopy_view(a, b, R);
+    state.SetIterationTime(elapsed_seconds);
   }
 }
 
@@ -41,19 +42,21 @@ static void ViewDeepCopy_Rank8_Raw(benchmark::State& state) {
           N8, KOKKOS_LAMBDA(const int& i) { a_ptr[i] = b_ptr[i]; });
     }
     Kokkos::fence();
-    timer.seconds();
+    state.SetIterationTime(timer.seconds());
   }
 }
 
 BENCHMARK(ViewDeepCopy_Rank8<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->ArgNames({"N", "R"})
     ->Args({10, 1})
-    ->Unit(benchmark::kSecond);
+    ->Unit(benchmark::kSecond)
+    ->UseManualTime();
 
 BENCHMARK(ViewDeepCopy_Rank8_Raw<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->ArgNames({"N", "R"})
     ->Args({10, 1})
-    ->Unit(benchmark::kSecond);
+    ->Unit(benchmark::kSecond)
+    ->UseManualTime();
 
 
 std::string custom_context() {
