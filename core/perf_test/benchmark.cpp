@@ -70,17 +70,17 @@ std::string custom_context() {
 // Run benchmarks
 // BENCHMARK_MAIN() + Kokkos init / finalize
 int main(int argc, char** argv) {
-  ::benchmark::Initialize(&argc, argv);
-  if (::benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
+  benchmark::Initialize(&argc, argv);
+  if (benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
   Kokkos::initialize(argc, argv);
-  ::benchmark::SetDefaultTimeUnit(benchmark::kSecond);
-  ::benchmark::AddCustomContext("Kokkos configuration", custom_context());
+  benchmark::SetDefaultTimeUnit(benchmark::kSecond);
+  benchmark::AddCustomContext("Kokkos configuration", custom_context());
 
-  ::benchmark::RunSpecifiedBenchmarks();
+  benchmark::RunSpecifiedBenchmarks();
   // REMOVE_ME: Run the vanilla test for comparison
   Test::run_deepcopyview_tests8<Kokkos::LayoutRight, Kokkos::LayoutLeft>(10, 1);
 
-  ::benchmark::Shutdown();
+  benchmark::Shutdown();
   Kokkos::finalize();
   return 0;
 }
