@@ -49,13 +49,11 @@ static void ViewDeepCopy_Rank8_Raw(benchmark::State& state) {
 BENCHMARK(ViewDeepCopy_Rank8<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->ArgNames({"N", "R"})
     ->Args({10, 1})
-    ->Unit(benchmark::kSecond)
     ->UseManualTime();
 
 BENCHMARK(ViewDeepCopy_Rank8_Raw<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->ArgNames({"N", "R"})
     ->Args({10, 1})
-    ->Unit(benchmark::kSecond)
     ->UseManualTime();
 
 
@@ -71,6 +69,7 @@ int main(int argc, char** argv) {
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
   Kokkos::initialize(argc, argv);
+  ::benchmark::SetDefaultTimeUnit(benchmark::kSecond);
   ::benchmark::AddCustomContext("Kokkos configuration", custom_context());
 
   ::benchmark::RunSpecifiedBenchmarks();
