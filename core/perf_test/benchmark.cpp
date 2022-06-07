@@ -1,10 +1,24 @@
 #include <benchmark/benchmark.h>
 
+#include <cmath>
+
 #include <Kokkos_Core.hpp>
 
 #include <PerfTest_ViewCopy.hpp>
 
 // replicates core/perf_test/PerfTest_ViewCopy_d8.cpp
+
+void report_results(benchmark::State& state, double time) {
+  state.SetIterationTime(time);
+
+  const auto N8        = std::pow(state.range(0), 8);
+  const auto size      = N8 * 8 / 1024 / 1024;
+  state.counters["MB"] = benchmark::Counter(size, benchmark::Counter::kDefaults,
+                                            benchmark::Counter::OneK::kIs1024);
+  state.counters["GB/s"] =
+      benchmark::Counter(2 * size / 1024 / time, benchmark::Counter::kDefaults,
+                         benchmark::Counter::OneK::kIs1024);
+}
 
 template <class LayoutA, class LayoutB>
 static void ViewDeepCopy_Rank8(benchmark::State& state) {
@@ -17,7 +31,8 @@ static void ViewDeepCopy_Rank8(benchmark::State& state) {
 
   for (auto _ : state) {
     const auto elapsed_seconds = Test::deepcopy_view(a, b, R);
-    state.SetIterationTime(elapsed_seconds);
+
+    report_results(state, elapsed_seconds);
   }
 }
 
@@ -43,11 +58,7 @@ static void ViewDeepCopy_Rank8_Raw(benchmark::State& state) {
     }
     Kokkos::fence();
 
-    state.SetIterationTime(timer.seconds());
-    const auto bytes = 1.0 * N8 * 8;
-    state.counters["Bytes"] =
-        benchmark::Counter(bytes, benchmark::Counter::kDefaults,
-                           benchmark::Counter::OneK::kIs1024);
+    report_results(state, timer.seconds());
   }
 }
 
@@ -56,10 +67,12 @@ BENCHMARK(ViewDeepCopy_Rank8<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->Args({10, 1})
     ->UseManualTime();
 
+#if defined(KOKKOS_ENABLE_CUDA_LAMBDA) || !defined(KOKKOS_ENABLE_CUDA)
 BENCHMARK(ViewDeepCopy_Rank8_Raw<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->ArgNames({"N", "R"})
     ->Args({10, 1})
     ->UseManualTime();
+#endif
 
 std::string custom_context() {
   std::ostringstream msg;
