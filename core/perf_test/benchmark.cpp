@@ -42,7 +42,12 @@ static void ViewDeepCopy_Rank8_Raw(benchmark::State& state) {
           N8, KOKKOS_LAMBDA(const int& i) { a_ptr[i] = b_ptr[i]; });
     }
     Kokkos::fence();
+
     state.SetIterationTime(timer.seconds());
+    const auto bytes = 1.0 * N8 * 8;
+    state.counters["Bytes"] =
+        benchmark::Counter(bytes, benchmark::Counter::kDefaults,
+                           benchmark::Counter::OneK::kIs1024);
   }
 }
 
@@ -55,7 +60,6 @@ BENCHMARK(ViewDeepCopy_Rank8_Raw<Kokkos::LayoutRight, Kokkos::LayoutLeft>)
     ->ArgNames({"N", "R"})
     ->Args({10, 1})
     ->UseManualTime();
-
 
 std::string custom_context() {
   std::ostringstream msg;
