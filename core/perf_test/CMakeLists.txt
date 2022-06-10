@@ -113,6 +113,6 @@ ENDIF()
 
 KOKKOS_ADD_EXECUTABLE_AND_TEST(
   PerformanceTest_Benchmark
-  SOURCES benchmark.cpp
+  SOURCES BenchmarkMain.cpp Benchmark_ViewCopy.cpp
   CATEGORIES PERFORMANCE
 )
