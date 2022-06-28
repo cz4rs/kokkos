@@ -89,7 +89,7 @@ void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
   /* description:
      randomly fill a rank-2 view with values between 0 and 523
      and then we run a team-level replace_if where we replace
-     the values that are greater than 251 with 1
+     the values that are greater than 151 with 1
      (note that these are purely arbitrary numbers)
    */
 
@@ -100,7 +100,7 @@ void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
   auto v_dc   = create_deep_copyable_compatible_view_with_same_extent(v);
   auto v_dc_h = create_mirror_view(Kokkos::HostSpace(), v_dc);
 
-  Kokkos::Random_XorShift64_Pool<> pool(12371);
+  Kokkos::Random_XorShift64_Pool<Kokkos::DefaultHostExecutionSpace> pool(12371);
   Kokkos::fill_random(v_dc_h, pool, 0, 523);
 
   std::vector<std::size_t> rowIndOfTargetElements;
