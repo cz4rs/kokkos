@@ -47,54 +47,49 @@
 
 namespace Test {
 namespace stdalgos {
-namespace TeamCountIf {
+namespace TeamCopy_n {
 
 namespace KE = Kokkos::Experimental;
 
-template <class ValueType>
-struct IsGreaterThanValueFunctor {
-  ValueType m_val;
-
-  KOKKOS_INLINE_FUNCTION
-  IsGreaterThanValueFunctor(ValueType val) : m_val(val) {}
-
-  KOKKOS_INLINE_FUNCTION
-  bool operator()(ValueType val) const { return (val > m_val); }
-};
-
-template <class ViewFromType, class ViewDestType, class MemberType,
-          class UnaryOpType>
+template <class ViewFromType, class ViewDestType, class MemberType>
 struct TestFunctorA {
   ViewFromType m_from_view;
   ViewDestType m_dest_view;
   int m_api_pick;
+  int m_num_to_copy;
 
   TestFunctorA(const ViewFromType viewFrom, const ViewDestType viewDest,
-               int apiPick)
-      : m_from_view(viewFrom), m_dest_view(viewDest), m_api_pick(apiPick) {}
+               int apiPick, int n_to_copy)
+      : m_from_view(viewFrom),
+        m_dest_view(viewDest),
+        m_api_pick(apiPick),
+        m_num_to_copy(n_to_copy) {}
 
   KOKKOS_INLINE_FUNCTION
   void operator()(const MemberType& member) const {
     const auto myRowIndex = member.league_rank();
-
     auto myRowViewFrom =
         Kokkos::subview(m_from_view, myRowIndex, Kokkos::ALL());
+    auto myRowViewDest =
+        Kokkos::subview(m_dest_view, myRowIndex, Kokkos::ALL());
 
     if (m_api_pick == 0) {
-      auto count              = KE::count_if(member, KE::begin(myRowViewFrom),
-                                KE::end(myRowViewFrom), UnaryOpType(151));
-      m_dest_view(myRowIndex) = count;
-
+      auto it = KE::copy_n(member, KE::begin(myRowViewFrom), m_num_to_copy,
+                           KE::begin(myRowViewDest));
+      (void)it;
     } else if (m_api_pick == 1) {
-      auto count = KE::count_if(member, myRowViewFrom, UnaryOpType(151));
-      m_dest_view(myRowIndex) = count;
+      auto it = KE::copy_n(member, myRowViewFrom, m_num_to_copy, myRowViewDest);
+      (void)it;
     }
   }
 };
 
 template <class Tag, class ValueType>
-void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
+void test_A(std::size_t num_teams, std::size_t num_cols, std::size_t n_to_copy,
+            int apiId) {
   /* description:
+     fill randomly a matrix and copy to another matrix
+     using a team par_for where each team handles one row
    */
 
   // v constructed on memory space associated with default exespace
@@ -106,15 +101,6 @@ void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
 
   Kokkos::Random_XorShift64_Pool<Kokkos::DefaultHostExecutionSpace> pool(12371);
   Kokkos::fill_random(v_dc_h, pool, 0, 523);
-  std::vector<int> countForEachRow(v_dc_h.extent(0), 0);
-  for (std::size_t i = 0; i < v_dc_h.extent(0); ++i) {
-    for (std::size_t j = 0; j < v_dc_h.extent(1); ++j) {
-      if (v_dc_h(i, j) > static_cast<ValueType>(151)) {
-        countForEachRow[i]++;
-      }
-    }
-  }
-
   // copy to v_dc and then to v
   Kokkos::deep_copy(v_dc, v_dc_h);
   CopyFunctorRank2<decltype(v_dc), decltype(v)> F1(v_dc, v);
@@ -126,37 +112,54 @@ void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
   using team_member_type = typename policy_type::member_type;
   policy_type policy(num_teams, Kokkos::AUTO());
 
-  auto v2     = create_view<int>(DynamicTag{}, num_teams, "v2");
-  using bop_t = IsGreaterThanValueFunctor<ValueType>;
+  auto v2 = create_view<ValueType>(Tag{}, num_teams, num_cols, "v2");
   using functor_type =
-      TestFunctorA<decltype(v), decltype(v2), team_member_type, bop_t>;
-  functor_type fnc(v, v2, apiId);
+      TestFunctorA<decltype(v), decltype(v2), team_member_type>;
+  functor_type fnc(v, v2, apiId, n_to_copy);
   Kokkos::parallel_for(policy, fnc);
 
   // check
+  auto v_h  = create_host_space_copy(v);
   auto v2_h = create_host_space_copy(v2);
-  for (std::size_t i = 0; i < v2_h.extent(0); ++i) {
-    EXPECT_TRUE(v2_h(i) == countForEachRow[i]);
-  }
-}
-
-template <class Tag, class ValueType>
-void run_all_scenarios() {
-  for (int num_teams : team_sizes_to_test) {
-    for (const auto& numCols : {0, 1, 2, 13, 101, 1444, 51153}) {
-      for (int apiId : {0, 1}) {
-        test_A<Tag, ValueType>(num_teams, numCols, apiId);
+  for (std::size_t i = 0; i < v_h.extent(0); ++i) {
+    for (std::size_t j = 0; j < v_h.extent(1); ++j) {
+      if (j < n_to_copy) {
+        EXPECT_TRUE(v_h(i, j) == v2_h(i, j));
+      } else {
+        EXPECT_TRUE(v2_h(i, j) == static_cast<ValueType>(0));
       }
     }
   }
 }
 
-TEST(std_algorithms_count_if_team_test, test) {
+template <class Tag, class ValueType>
+void run_all_scenarios() {
+  // key = num of columns,
+  // value = list of num of elemenents to fill
+  using v_t                          = std::vector<int>;
+  const std::map<int, v_t> scenarios = {{0, v_t{0}},
+                                        {2, v_t{0, 1, 2}},
+                                        {6, v_t{0, 1, 2, 5}},
+                                        {13, v_t{0, 1, 2, 8, 11}}};
+
+  for (int num_teams : team_sizes_to_test) {
+    for (const auto& scenario : scenarios) {
+      const std::size_t numCols = scenario.first;
+      for (int numElementsToCopy : scenario.second) {
+        for (int apiId : {0, 1}) {
+          test_A<Tag, ValueType>(num_teams, numCols, numElementsToCopy, apiId);
+        }
+      }
+    }
+  }
+}
+
+TEST(std_algorithms_copy_n_team_test, test) {
   run_all_scenarios<DynamicTag, double>();
   run_all_scenarios<StridedTwoRowsTag, int>();
   run_all_scenarios<StridedThreeRowsTag, unsigned>();
 }
 
-}  // namespace TeamCountIf
+}  // namespace TeamCopy_n
 }  // namespace stdalgos
 }  // namespace Test

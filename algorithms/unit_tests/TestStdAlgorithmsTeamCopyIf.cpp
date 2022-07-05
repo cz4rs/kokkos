@@ -47,7 +47,7 @@
 
 namespace Test {
 namespace stdalgos {
-namespace TeamCountIf {
+namespace TeamCopyIf {
 
 namespace KE = Kokkos::Experimental;
 
@@ -79,15 +79,18 @@ struct TestFunctorA {
 
     auto myRowViewFrom =
         Kokkos::subview(m_from_view, myRowIndex, Kokkos::ALL());
+    auto myRowViewDest =
+        Kokkos::subview(m_dest_view, myRowIndex, Kokkos::ALL());
 
     if (m_api_pick == 0) {
-      auto count              = KE::count_if(member, KE::begin(myRowViewFrom),
-                                KE::end(myRowViewFrom), UnaryOpType(151));
-      m_dest_view(myRowIndex) = count;
-
+      auto it =
+          KE::copy_if(member, KE::begin(myRowViewFrom), KE::end(myRowViewFrom),
+                      KE::begin(myRowViewDest), UnaryOpType(151));
+      (void)it;
     } else if (m_api_pick == 1) {
-      auto count = KE::count_if(member, myRowViewFrom, UnaryOpType(151));
-      m_dest_view(myRowIndex) = count;
+      auto it =
+          KE::copy_if(member, myRowViewFrom, myRowViewDest, UnaryOpType(151));
+      (void)it;
     }
   }
 };
@@ -106,13 +109,25 @@ void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
 
   Kokkos::Random_XorShift64_Pool<Kokkos::DefaultHostExecutionSpace> pool(12371);
   Kokkos::fill_random(v_dc_h, pool, 0, 523);
-  std::vector<int> countForEachRow(v_dc_h.extent(0), 0);
+  std::vector<std::size_t> rowIndOfTargetElements;
+  std::vector<std::size_t> colIndOfTargetElements;
+  std::vector<std::size_t> newColIndOfTargetElements;
+  std::vector<std::size_t> rowIndOfNonTargetElements;
+  std::vector<std::size_t> colIndOfNonTargetElements;
+  std::vector<std::size_t> countPerRow(v_dc_h.extent(0), 0);
   for (std::size_t i = 0; i < v_dc_h.extent(0); ++i) {
+    std::size_t newColInd = 0;
     for (std::size_t j = 0; j < v_dc_h.extent(1); ++j) {
       if (v_dc_h(i, j) > static_cast<ValueType>(151)) {
-        countForEachRow[i]++;
+        rowIndOfTargetElements.push_back(i);
+        colIndOfTargetElements.push_back(j);
+        newColIndOfTargetElements.push_back(newColInd++);
+      } else {
+        rowIndOfNonTargetElements.push_back(i);
+        colIndOfNonTargetElements.push_back(j);
       }
     }
+    countPerRow[i] = newColInd;
   }
 
   // copy to v_dc and then to v
@@ -126,7 +141,8 @@ void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
   using team_member_type = typename policy_type::member_type;
   policy_type policy(num_teams, Kokkos::AUTO());
 
-  auto v2     = create_view<int>(DynamicTag{}, num_teams, "v2");
+  // v2 is the destination view where we copy values to
+  auto v2     = create_view<ValueType>(Tag{}, num_teams, num_cols, "v2");
   using bop_t = IsGreaterThanValueFunctor<ValueType>;
   using functor_type =
       TestFunctorA<decltype(v), decltype(v2), team_member_type, bop_t>;
@@ -134,9 +150,21 @@ void test_A(std::size_t num_teams, std::size_t num_cols, int apiId) {
   Kokkos::parallel_for(policy, fnc);
 
   // check
+  auto v_h  = create_host_space_copy(v);
   auto v2_h = create_host_space_copy(v2);
+  for (std::size_t k = 0; k < rowIndOfTargetElements.size(); ++k) {
+    const auto rowInd    = rowIndOfTargetElements[k];
+    const auto colInd    = colIndOfTargetElements[k];
+    const auto newColInd = newColIndOfTargetElements[k];
+    EXPECT_TRUE(v2_h(rowInd, newColInd) == v_h(rowInd, colInd));
+    EXPECT_TRUE(v2_h(rowInd, newColInd) > static_cast<ValueType>(151));
+  }
+
   for (std::size_t i = 0; i < v2_h.extent(0); ++i) {
-    EXPECT_TRUE(v2_h(i) == countForEachRow[i]);
+    const auto thiscount = countPerRow[i];
+    for (std::size_t j = thiscount; j < v2_h.extent(1); ++j) {
+      EXPECT_TRUE(v2_h(i, j) == static_cast<ValueType>(0));
+    }
   }
 }
 
@@ -151,12 +179,12 @@ void run_all_scenarios() {
   }
 }
 
-TEST(std_algorithms_count_if_team_test, test) {
+TEST(std_algorithms_copy_if_team_test, test) {
   run_all_scenarios<DynamicTag, double>();
   run_all_scenarios<StridedTwoRowsTag, int>();
   run_all_scenarios<StridedThreeRowsTag, unsigned>();
 }
 
-}  // namespace TeamCountIf
+}  // namespace TeamCopyIf
 }  // namespace stdalgos
 }  // namespace Test
