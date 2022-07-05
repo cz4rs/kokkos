@@ -44,4 +44,30 @@
 
 #include <benchmark/benchmark.h>
 
-BENCHMARK_MAIN();
+#include <Kokkos_Core.hpp>
+
+#include <PerfTest_ViewCopy.hpp>  //REMOVE_ME: comparison with original
+
+std::string custom_context() {
+  std::ostringstream msg;
+  Kokkos::print_configuration(msg);
+  return msg.str();
+}
+
+// Run benchmarks
+// BENCHMARK_MAIN() + Kokkos init / finalize
+int main(int argc, char** argv) {
+  benchmark::Initialize(&argc, argv);
+  if (benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
+  Kokkos::initialize(argc, argv);
+  benchmark::SetDefaultTimeUnit(benchmark::kSecond);
+  benchmark::AddCustomContext("Kokkos configuration", custom_context());
+
+  benchmark::RunSpecifiedBenchmarks();
+  // REMOVE_ME: Run the vanilla test for comparison
+  Test::run_deepcopyview_tests8<Kokkos::LayoutRight, Kokkos::LayoutLeft>(10, 1);
+
+  benchmark::Shutdown();
+  Kokkos::finalize();
+  return 0;
+}
