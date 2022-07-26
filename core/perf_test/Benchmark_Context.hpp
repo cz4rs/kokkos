@@ -42,23 +42,23 @@
 //@HEADER
 */
 
-#include <benchmark/benchmark.h>
+#ifndef KOKKOS_CORE_PERFTEST_BENCHMARK_CONTEXT_HPP
+#define KOKKOS_CORE_PERFTEST_BENCHMARK_CONTEXT_HPP
 
-#include <Benchmark_Context.hpp>
+#include <benchmark/benchmark.h>
 
 #include <Kokkos_Core.hpp>
 
-int main(int argc, char** argv) {
-  Kokkos::initialize(argc, argv);
-  benchmark::Initialize(&argc, argv);
-  if (benchmark::ReportUnrecognizedArguments(argc, argv)) return 1;
+#include <string>
 
-  benchmark::SetDefaultTimeUnit(benchmark::kSecond);
-  Test::add_benchmark_context();
+namespace Test {
 
-  benchmark::RunSpecifiedBenchmarks();
-
-  benchmark::Shutdown();
-  Kokkos::finalize();
-  return 0;
+void add_benchmark_context(bool verbose = false) {
+  std::ostringstream msg;
+  Kokkos::print_configuration(msg, verbose);
+  benchmark::AddCustomContext("Kokkos configuration", msg.str());
 }
+
+}  // namespace Test
+
+#endif
