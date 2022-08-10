@@ -43,7 +43,6 @@
 */
 
 #include <TestStdAlgorithmsCommon.hpp>
-#include <Kokkos_Random.hpp>
 
 namespace Test {
 namespace stdalgos {
@@ -85,11 +84,11 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
   // prepare data
   // -----------------------------------------------
   // create a view in the memory space associated with default exespace
-  // with as many rows as the teams count and fill with values randomly
-  // in a target interval
-  auto [dataView, _] =
-      create_view_and_fill_randomly(LayoutTag{}, numTeams, numCols,
-                                    ValueType(11), ValueType(523), "dataView");
+  // with as many rows as the number of teams and fill it with random
+  // values from an arbitrary range
+  auto [dataView, _] = create_view_and_fill_randomly(
+      LayoutTag{}, numTeams, numCols, std::pair{ValueType(11), ValueType(523)},
+      "dataView");
 
   // -----------------------------------------------
   // launch kokkos kernel
