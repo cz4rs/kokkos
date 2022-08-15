@@ -45,11 +45,11 @@
 #ifndef KOKKOS_CORE_PERFTEST_BENCHMARK_CONTEXT_HPP
 #define KOKKOS_CORE_PERFTEST_BENCHMARK_CONTEXT_HPP
 
+#include <string>
+
 #include <benchmark/benchmark.h>
 
 #include <Kokkos_Core.hpp>
-
-#include <string>
 
 namespace Test {
 
