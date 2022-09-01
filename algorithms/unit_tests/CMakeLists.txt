@@ -145,7 +145,8 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;HIP;SYCL;OpenMPTarget)
   endif()
 endforeach()
 
-# FIXME_OPENMPTARGET
+# FIXME_OPENMPTARGET These tests cause internal compiler errors as of 09/01/22
+# when compiling for Intel's Xe-HP GPUs.
 if(KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL IntelLLVM)
   list(REMOVE_ITEM STDALGO_SOURCES_D
     TestStdAlgorithmsCopyIf.cpp
@@ -159,7 +160,8 @@ if(KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL IntelLLVM)
   )
 endif()
 
-# FIXME_OPENMPTARGET
+# FIXME_OPENMPTARGET This test causes internal compiler errors as of 09/01/22
+# when compiling for Intel's Xe-HP GPUs.
 if(NOT (KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL IntelLLVM))
   KOKKOS_ADD_EXECUTABLE_AND_TEST(
     UnitTest_RandomAndSort
@@ -178,7 +180,8 @@ foreach(ID A;B;C;D;E)
     )
 endforeach()
 
-# FIXME_OPENMPTARGET
+# FIXME_OPENMPTARGET This test causes internal compiler errors as of 09/01/22
+# when compiling for Intel's Xe-HP GPUs.
 if(NOT (KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL IntelLLVM))
   KOKKOS_ADD_EXECUTABLE(
     UnitTest_StdAlgoCompileOnly
