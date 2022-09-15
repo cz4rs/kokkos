@@ -46,8 +46,6 @@
 #include <benchmark/benchmark.h>
 #include <cmath>
 
-#include <Benchmark_Context.hpp>
-
 namespace Test {
 
 void report_results_fill(benchmark::State& state, double time);
