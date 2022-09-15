@@ -53,11 +53,8 @@
 
 namespace Test {
 
-void add_benchmark_context(bool verbose = false) {
-  std::ostringstream msg;
-  Kokkos::print_configuration(msg, verbose);
-  benchmark::AddCustomContext("Kokkos configuration", msg.str());
-}
+void add_benchmark_context(bool verbose = false);
+std::string benchmark_fom(const std::string& label);
 
 }  // namespace Test
 

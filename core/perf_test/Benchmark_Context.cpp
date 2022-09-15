@@ -42,40 +42,19 @@
 //@HEADER
 */
 
-#include <PerfTest_ViewFill.hpp>
+#include <Benchmark_Context.hpp>
 
 namespace Test {
 
-BENCHMARK(ViewFill_Rank8<Kokkos::LayoutLeft>)
-    ->ArgName("N")
-    ->Arg(10)
-    ->UseManualTime();
+/**
+ * \brief Mark the label as a figure of merit.
+ */
+std::string benchmark_fom(const std::string& label) { return "FOM: " + label; }
 
-BENCHMARK(ViewFill_Rank8<Kokkos::LayoutRight>)
-    ->ArgName("N")
-    ->Arg(10)
-    ->UseManualTime();
-
-BENCHMARK(ViewFill_Rank8<Kokkos::LayoutLeft>)
-    ->ArgName("N")
-    ->Arg(10)
-    ->UseManualTime();
-
-BENCHMARK(ViewFill_Rank8<Kokkos::LayoutRight>)
-    ->ArgName("N")
-    ->Arg(10)
-    ->UseManualTime();
-
-BENCHMARK(ViewFill_Rank8<Kokkos::LayoutLeft>)
-    ->ArgName("N")
-    ->Arg(10)
-    ->UseManualTime();
-
-BENCHMARK(ViewFill_Rank8<Kokkos::LayoutRight>)
-    ->ArgName("N")
-    ->Arg(10)
-    ->UseManualTime();
+void add_benchmark_context(bool verbose) {
+  std::ostringstream msg;
+  Kokkos::print_configuration(msg, verbose);
+  benchmark::AddCustomContext("Kokkos configuration", msg.str());
+}
 
 }  // namespace Test
-
-// run_fillview_tests123<Kokkos::LayoutLeft>(10, 1);

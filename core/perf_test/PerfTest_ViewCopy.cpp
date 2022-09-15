@@ -44,12 +44,9 @@
 
 #include <PerfTest_ViewCopy.hpp>
 
-namespace Test {
+#include <Benchmark_Context.hpp>
 
-/**
- * \brief Mark the label as a figure of merit.
- */
-std::string benchmark_fom(const std::string& label) { return "FOM: " + label; }
+namespace Test {
 
 void report_results(benchmark::State& state, double time) {
   state.SetIterationTime(time);

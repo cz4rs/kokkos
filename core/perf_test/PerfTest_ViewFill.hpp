@@ -47,13 +47,13 @@
 #include <cmath>
 #include <cstdio>
 
-namespace Test {
+#include <Benchmark_Context.hpp>
 
-std::string benchmark_fom(const std::string& label) { return "FOM: " + label; }
+namespace Test {
 
 template <class ViewType>
 void fill_view(ViewType& a, typename ViewType::const_value_type& val,
-                 benchmark::State& state) {
+               benchmark::State& state) {
   Kokkos::Timer timer;
   Kokkos::deep_copy(a, val);
   Kokkos::fence();
@@ -70,7 +70,6 @@ void fill_view(ViewType& a, typename ViewType::const_value_type& val,
       benchmark::Counter(size / 1024 / time, benchmark::Counter::kDefaults,
                          benchmark::Counter::OneK::kIs1024);
 }
-
 
 template <class Layout>
 static void ViewFill_Rank1(benchmark::State& state) {
@@ -290,8 +289,7 @@ template <class Layout>
 static void ViewFill_Rank8(benchmark::State& state) {
   const int N1 = state.range(0);
 
-  Kokkos::View<double********, Layout> a("A8", N1, N1, N1, N1, N1, N1, N1,
-                                         N1);
+  Kokkos::View<double********, Layout> a("A8", N1, N1, N1, N1, N1, N1, N1, N1);
   fill_view(a, 1.1, state);
 }
 
