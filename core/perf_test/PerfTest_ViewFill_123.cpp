@@ -45,10 +45,37 @@
 #include <PerfTest_ViewFill.hpp>
 
 namespace Test {
-TEST(default_exec, ViewFill_Rank123) {
-  printf("ViewFill Performance for LayoutLeft:\n");
-  run_fillview_tests123<Kokkos::LayoutLeft>(10, 1);
-  printf("ViewFill Performance for LayoutRight:\n");
-  run_fillview_tests123<Kokkos::LayoutRight>(10, 1);
-}
+
+BENCHMARK(ViewFill_Rank8<Kokkos::LayoutLeft>)
+    ->ArgName("N")
+    ->Arg(10)
+    ->UseManualTime();
+
+BENCHMARK(ViewFill_Rank8<Kokkos::LayoutRight>)
+    ->ArgName("N")
+    ->Arg(10)
+    ->UseManualTime();
+
+BENCHMARK(ViewFill_Rank8<Kokkos::LayoutLeft>)
+    ->ArgName("N")
+    ->Arg(10)
+    ->UseManualTime();
+
+BENCHMARK(ViewFill_Rank8<Kokkos::LayoutRight>)
+    ->ArgName("N")
+    ->Arg(10)
+    ->UseManualTime();
+
+BENCHMARK(ViewFill_Rank8<Kokkos::LayoutLeft>)
+    ->ArgName("N")
+    ->Arg(10)
+    ->UseManualTime();
+
+BENCHMARK(ViewFill_Rank8<Kokkos::LayoutRight>)
+    ->ArgName("N")
+    ->Arg(10)
+    ->UseManualTime();
+
 }  // namespace Test
+
+  // run_fillview_tests123<Kokkos::LayoutLeft>(10, 1);
