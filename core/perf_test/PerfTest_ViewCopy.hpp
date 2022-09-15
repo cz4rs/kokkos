@@ -51,7 +51,7 @@
 
 namespace Test {
 
-void report_results(benchmark::State& state, double time);
+void report_results_copy(benchmark::State& state, double time);
 
 template <class ViewTypeA, class ViewTypeB>
 void deepcopy_view(ViewTypeA& a, ViewTypeB& b, benchmark::State& state) {
@@ -59,7 +59,7 @@ void deepcopy_view(ViewTypeA& a, ViewTypeB& b, benchmark::State& state) {
     Kokkos::Timer timer;
     Kokkos::deep_copy(a, b);
     Kokkos::fence();
-    report_results(state, timer.seconds());
+    report_results_copy(state, timer.seconds());
   }
 }
 
@@ -166,7 +166,7 @@ static void ViewDeepCopy_Raw(benchmark::State& state) {
         N8, KOKKOS_LAMBDA(const int& i) { a_ptr[i] = b_ptr[i]; });
     Kokkos::fence();
 
-    report_results(state, timer.seconds());
+    report_results_copy(state, timer.seconds());
   }
 }
 

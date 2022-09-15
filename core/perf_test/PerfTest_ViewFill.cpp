@@ -42,21 +42,21 @@
 //@HEADER
 */
 
-#include <PerfTest_ViewCopy.hpp>
+#include <PerfTest_ViewFill.hpp>
 
 #include <Benchmark_Context.hpp>
 
 namespace Test {
 
-void report_results_copy(benchmark::State& state, double time) {
+void report_results_fill(benchmark::State& state, double time) {
   state.SetIterationTime(time);
+  const auto N8   = std::pow(state.range(0), 8);
+  const auto size = N8 * 8 / 1024 / 1024;
 
-  const auto N8        = std::pow(state.range(0), 8);
-  const auto size      = N8 * 8 / 1024 / 1024;
   state.counters["MB"] = benchmark::Counter(size, benchmark::Counter::kDefaults,
                                             benchmark::Counter::OneK::kIs1024);
   state.counters[benchmark_fom("GB/s")] =
-      benchmark::Counter(2 * size / 1024 / time, benchmark::Counter::kDefaults,
+      benchmark::Counter(size / 1024 / time, benchmark::Counter::kDefaults,
                          benchmark::Counter::OneK::kIs1024);
 }
 

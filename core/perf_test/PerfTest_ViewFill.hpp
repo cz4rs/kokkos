@@ -45,30 +45,22 @@
 #include <Kokkos_Core.hpp>
 #include <benchmark/benchmark.h>
 #include <cmath>
-#include <cstdio>
 
 #include <Benchmark_Context.hpp>
 
 namespace Test {
 
+void report_results_fill(benchmark::State& state, double time);
+
 template <class ViewType>
 void fill_view(ViewType& a, typename ViewType::const_value_type& val,
                benchmark::State& state) {
-  Kokkos::Timer timer;
-  Kokkos::deep_copy(a, val);
-  Kokkos::fence();
-  auto time = timer.seconds();
-
-  // report results
-  state.SetIterationTime(time);
-  const auto N8   = std::pow(state.range(0), 8);
-  const auto size = N8 * 8 / 1024 / 1024;
-
-  state.counters["MB"] = benchmark::Counter(size, benchmark::Counter::kDefaults,
-                                            benchmark::Counter::OneK::kIs1024);
-  state.counters[benchmark_fom("GB/s")] =
-      benchmark::Counter(size / 1024 / time, benchmark::Counter::kDefaults,
-                         benchmark::Counter::OneK::kIs1024);
+  for (auto _ : state) {
+    Kokkos::Timer timer;
+    Kokkos::deep_copy(a, val);
+    Kokkos::fence();
+    report_results_fill(state, timer.seconds());
+  }
 }
 
 template <class Layout>
