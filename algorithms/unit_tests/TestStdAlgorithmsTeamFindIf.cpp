@@ -82,12 +82,12 @@ struct TestFunctorA {
     const auto myRowIndex = member.league_rank();
     auto myRowViewFrom = Kokkos::subview(m_dataView, myRowIndex, Kokkos::ALL());
     const auto val     = m_greaterThanValuesView(myRowIndex);
-    GreaterEqualFunctor unaryOp{val};
+    GreaterEqualFunctor unaryPred{val};
 
     switch (m_apiPick) {
       case 0: {
         auto it = KE::find_if(member, KE::cbegin(myRowViewFrom),
-                              KE::cend(myRowViewFrom), unaryOp);
+                              KE::cend(myRowViewFrom), unaryPred);
 
         Kokkos::single(Kokkos::PerTeam(member), [=]() {
           m_distancesView(myRowIndex) =
@@ -98,7 +98,7 @@ struct TestFunctorA {
       }
 
       case 1: {
-        auto it = KE::find_if(member, myRowViewFrom, unaryOp);
+        auto it = KE::find_if(member, myRowViewFrom, unaryPred);
 
         Kokkos::single(Kokkos::PerTeam(member), [=]() {
           m_distancesView(myRowIndex) =
@@ -148,7 +148,7 @@ void test_A(const bool predicatesReturnTrue, std::size_t numTeams,
   // [0, numCols) is used to obtain a value from dataView, and later that value
   // is used for creating concrete GreaterEqualFunctor predicate.
   //
-  // If searchedValuesExist == false we want to ensure the opposite, so every
+  // If predicatesReturnTrue == false we want to ensure the opposite, so every
   // value is randomly picked from range [upperBound, upperBound*2).
   Kokkos::View<ValueType*> greaterEqualValuesView("greaterEqualValuesView",
                                                   numTeams);
@@ -185,12 +185,12 @@ void test_A(const bool predicatesReturnTrue, std::size_t numTeams,
   auto distancesView_h = create_host_space_copy(distancesView);
   for (std::size_t i = 0; i < dataView.extent(0); ++i) {
     auto rowFrom = Kokkos::subview(dataViewBeforeOp_h, i, Kokkos::ALL());
-    const auto rowFromBegin = KE::begin(rowFrom);
-    const auto rowFromEnd   = KE::end(rowFrom);
+    const auto rowFromBegin = KE::cbegin(rowFrom);
+    const auto rowFromEnd   = KE::cend(rowFrom);
     const auto val          = greaterEqualValuesView_h(i);
-    const GreaterEqualFunctor unaryOp{val};
+    const GreaterEqualFunctor unaryPred{val};
 
-    auto it = std::find_if(rowFromBegin, rowFromEnd, unaryOp);
+    auto it = std::find_if(rowFromBegin, rowFromEnd, unaryPred);
 
     const std::size_t stdDistance      = KE::distance(rowFromBegin, it);
     const std::size_t beginEndDistance = KE::distance(rowFromBegin, rowFromEnd);

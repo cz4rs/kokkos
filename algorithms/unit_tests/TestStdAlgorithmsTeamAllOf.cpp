@@ -43,12 +43,6 @@
 */
 
 #include <TestStdAlgorithmsCommon.hpp>
-#include <algorithm>
-#include <cstddef>
-#include <functional>
-#include <numeric>
-#include "gtest/gtest.h"
-#include "std_algorithms/Kokkos_BeginEnd.hpp"
 
 namespace Test {
 namespace stdalgos {
@@ -67,20 +61,20 @@ struct GreaterThanValueFunctor {
   bool operator()(ValueType val) const { return (val > m_val); }
 };
 
-template <class DataViewType, class AlllOfResultsViewType, class UnaryOp>
+template <class DataViewType, class AlllOfResultsViewType, class UnaryPredType>
 struct TestFunctorA {
   DataViewType m_dataView;
   AlllOfResultsViewType m_allOfResultsView;
   int m_apiPick;
-  UnaryOp m_unaryOp;
+  UnaryPredType m_unaryPred;
 
   TestFunctorA(const DataViewType dataView,
                const AlllOfResultsViewType allOfResultsView, int apiPick,
-               UnaryOp unaryOp)
+               UnaryPredType unaryPred)
       : m_dataView(dataView),
         m_allOfResultsView(allOfResultsView),
         m_apiPick(apiPick),
-        m_unaryOp(std::move(unaryOp)) {}
+        m_unaryPred(unaryPred) {}
 
   template <class MemberType>
   KOKKOS_INLINE_FUNCTION void operator()(const MemberType& member) const {
@@ -91,17 +85,16 @@ struct TestFunctorA {
     switch (m_apiPick) {
       case 0: {
         const bool result = KE::all_of(member, KE::cbegin(myRowViewFrom),
-                                       KE::cend(myRowViewFrom), m_unaryOp);
+                                       KE::cend(myRowViewFrom), m_unaryPred);
         Kokkos::single(Kokkos::PerTeam(member),
                        [=]() { m_allOfResultsView(myRowIndex) = result; });
         break;
       }
 
       case 1: {
-        const bool result = KE::all_of(member, myRowViewFrom, m_unaryOp);
+        const bool result = KE::all_of(member, myRowViewFrom, m_unaryPred);
         Kokkos::single(Kokkos::PerTeam(member),
                        [=]() { m_allOfResultsView(myRowIndex) = result; });
-        break;
         break;
       }
     }
@@ -151,9 +144,8 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
   for (std::size_t i = 0; i < dataView.extent(0); ++i) {
     auto rowFrom = Kokkos::subview(dataViewBeforeOp_h, i, Kokkos::ALL());
     const bool result =
-        std::all_of(KE::begin(rowFrom), KE::end(rowFrom), unaryPred);
+        std::all_of(KE::cbegin(rowFrom), KE::cend(rowFrom), unaryPred);
     EXPECT_EQ(result, allOfResultsView_h(i));
-    break;
   }
 }
 
