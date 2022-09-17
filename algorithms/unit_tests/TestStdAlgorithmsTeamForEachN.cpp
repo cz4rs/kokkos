@@ -46,55 +46,45 @@
 
 namespace Test {
 namespace stdalgos {
-namespace TeamAllOf {
+namespace TeamForEachN {
 
 namespace KE = Kokkos::Experimental;
 
 template <class ValueType>
-struct GreaterThanValueFunctor {
-  ValueType m_val;
-
+struct PrefixIncrementFunctor {
   KOKKOS_INLINE_FUNCTION
-  GreaterThanValueFunctor(ValueType val) : m_val(val) {}
-
-  KOKKOS_INLINE_FUNCTION
-  bool operator()(ValueType val) const { return (val > m_val); }
+  void operator()(ValueType& val) const { ++val; }
 };
 
-template <class DataViewType, class AlllOfResultsViewType, class UnaryPredType>
+template <class DataViewType, class NViewType, class UnaryPredType>
 struct TestFunctorA {
   DataViewType m_dataView;
-  AlllOfResultsViewType m_allOfResultsView;
+  NViewType m_nView;
   int m_apiPick;
   UnaryPredType m_unaryPred;
 
-  TestFunctorA(const DataViewType dataView,
-               const AlllOfResultsViewType allOfResultsView, int apiPick,
+  TestFunctorA(const DataViewType dataView, const NViewType nView, int apiPick,
                UnaryPredType unaryPred)
       : m_dataView(dataView),
-        m_allOfResultsView(allOfResultsView),
+        m_nView(nView),
         m_apiPick(apiPick),
         m_unaryPred(unaryPred) {}
 
   template <class MemberType>
   KOKKOS_INLINE_FUNCTION void operator()(const MemberType& member) const {
     const auto myRowIndex = member.league_rank();
+    const auto n          = m_nView(myRowIndex);
 
     auto myRowViewFrom = Kokkos::subview(m_dataView, myRowIndex, Kokkos::ALL());
 
     switch (m_apiPick) {
       case 0: {
-        const bool result = KE::all_of(member, KE::cbegin(myRowViewFrom),
-                                       KE::cend(myRowViewFrom), m_unaryPred);
-        Kokkos::single(Kokkos::PerTeam(member),
-                       [=]() { m_allOfResultsView(myRowIndex) = result; });
+        KE::for_each_n(member, KE::begin(myRowViewFrom), n, m_unaryPred);
         break;
       }
 
       case 1: {
-        const bool result = KE::all_of(member, myRowViewFrom, m_unaryPred);
-        Kokkos::single(Kokkos::PerTeam(member),
-                       [=]() { m_allOfResultsView(myRowIndex) = result; });
+        KE::for_each_n(member, myRowViewFrom, n, m_unaryPred);
         break;
       }
     }
@@ -105,7 +95,7 @@ template <class LayoutTag, class ValueType>
 void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
   /* description:
      use a rank-2 view randomly filled with values,
-     and run a team-level all_of
+     and run a team-level for_each_n
    */
 
   // -----------------------------------------------
@@ -117,8 +107,17 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
   constexpr auto lowerBound = ValueType{5};
   constexpr auto upperBound = ValueType{523};
   Kokkos::pair bounds{lowerBound, upperBound};
-  auto [dataView, dataViewBeforeOp_h] = create_random_view_and_host_clone(
+  auto [dataView, dataView_h] = create_random_view_and_host_clone(
       LayoutTag{}, numTeams, numCols, bounds, "dataView");
+
+  Kokkos::View<std::size_t*> nView("nView", numTeams);
+  auto nView_h = create_host_space_copy(nView);
+  using rand_pool =
+      Kokkos::Random_XorShift64_Pool<Kokkos::DefaultHostExecutionSpace>;
+  rand_pool pool(lowerBound * upperBound);
+  Kokkos::fill_random(nView_h, pool, 0, numCols);
+
+  Kokkos::deep_copy(nView, nView_h);
 
   // -----------------------------------------------
   // launch kokkos kernel
@@ -126,33 +125,29 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
   using space_t = Kokkos::DefaultExecutionSpace;
   Kokkos::TeamPolicy<space_t> policy(numTeams, Kokkos::AUTO());
 
-  // to verify that things work, each team stores the result of its all_of call,
-  // and then we check that these match what we expect
-  Kokkos::View<bool*> allOfResultsView("allOfResultsView", numTeams);
-
-  GreaterThanValueFunctor unaryPred{lowerBound - 1};
+  PrefixIncrementFunctor<ValueType> unaryPred;
 
   // use CTAD for functor
-  TestFunctorA fnc(dataView, allOfResultsView, apiId, unaryPred);
+  TestFunctorA fnc(dataView, nView, apiId, unaryPred);
   Kokkos::parallel_for(policy, fnc);
 
   // -----------------------------------------------
   // run cpp-std kernel and check
   // -----------------------------------------------
-  auto allOfResultsView_h = create_host_space_copy(allOfResultsView);
-
-  for (std::size_t i = 0; i < dataView.extent(0); ++i) {
-    auto rowFrom = Kokkos::subview(dataViewBeforeOp_h, i, Kokkos::ALL());
-    const bool result =
-        std::all_of(KE::cbegin(rowFrom), KE::cend(rowFrom), unaryPred);
-    EXPECT_EQ(result, allOfResultsView_h(i));
+  for (std::size_t i = 0; i < dataView_h.extent(0); ++i) {
+    auto rowFrom = Kokkos::subview(dataView_h, i, Kokkos::ALL());
+    const auto n = nView_h(i);
+    std::for_each_n(KE::begin(rowFrom), n, unaryPred);
   }
+
+  auto dataViewAfterOp_h = create_host_space_copy(dataView);
+  expect_equal_host_views(dataView_h, dataViewAfterOp_h);
 }
 
 template <class LayoutTag, class ValueType>
 void run_all_scenarios() {
   for (int numTeams : teamSizesToTest) {
-    for (const auto& numCols : {0, 1, 2, 13, 101, 1444, 8153}) {
+    for (const auto& numCols : {1, 2, 13, 101, 1444, 8153}) {
       for (int apiId : {0, 1}) {
         test_A<LayoutTag, ValueType>(numTeams, numCols, apiId);
       }
@@ -160,12 +155,12 @@ void run_all_scenarios() {
   }
 }
 
-TEST(std_algorithms_all_of_team_test, test) {
+TEST(std_algorithms_for_each_n_team_test, test) {
   run_all_scenarios<DynamicTag, double>();
   run_all_scenarios<StridedTwoRowsTag, int>();
   run_all_scenarios<StridedThreeRowsTag, unsigned>();
 }
 
-}  // namespace TeamAllOf
+}  // namespace TeamForEachN
 }  // namespace stdalgos
 }  // namespace Test
