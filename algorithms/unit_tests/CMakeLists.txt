@@ -234,6 +234,8 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenACC;HIP;SYCL;OpenMPTarget)
     foreach(Name
 	StdAlgorithmsCommon
 	StdAlgorithmsTeamAdjacentDifference
+	StdAlgorithmsTeamExclusiveScan
+	StdAlgorithmsTeamInclusiveScan
 	StdAlgorithmsTeamReduce
 	StdAlgorithmsTeamTransformReduce
 	)
