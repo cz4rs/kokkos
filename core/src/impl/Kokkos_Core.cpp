@@ -511,7 +511,7 @@ void pre_initialize_internal(const Kokkos::InitializationSettings& settings) {
   if (settings.has_tune_internals() && settings.get_tune_internals())
     g_tune_internals = true;
   declare_configuration_metadata("version_info", "Kokkos Version",
-                                 version_string_from_int(KOKKOS_VERSION));
+                                 version_string_from_int(30799));
 #ifdef KOKKOS_COMPILER_APPLECC
   declare_configuration_metadata("compiler_version", "KOKKOS_COMPILER_APPLECC",
                                  std::to_string(KOKKOS_COMPILER_APPLECC));
