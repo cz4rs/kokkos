@@ -84,3 +84,17 @@ jobs:
       - name: Tests
         working-directory: builddir
         run: ctest --output-on-failure -R KokkosCore_PerformanceTest_Benchmark
+      - name: Gather benchmark results
+        run: |-
+          mkdir benchmark-results
+          find builddir/core/perf_test/ -name "*.json" -exec mv {} benchmark-results/  \;
+      - name: Push benchmark results
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: 'benchmark-results'
+          destination_repo: 'cz4rs/kokkos-benchmark-results'
+          destination_branch: 'master'
+          user_email: 'someone@some-mail.com'
+          user_name: 'someone'
