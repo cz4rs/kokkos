@@ -10,41 +10,11 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        distro: ['fedora:latest', 'fedora:rawhide', 'ubuntu:latest']
+        distro: ['fedora:latest']
         cxx: ['g++', 'clang++']
-        cmake_build_type: ['Release', 'Debug']
+        cmake_build_type: ['Release']
         backend: ['OPENMP']
         clang-tidy: ['']
-        include:
-          - distro: 'fedora:intel'
-            cxx: 'icpc'
-            cmake_build_type: 'Release'
-            backend: 'OPENMP'
-            clang-tidy: ''
-          - distro: 'fedora:intel'
-            cxx: 'icpc'
-            cmake_build_type: 'Debug'
-            backend: 'OPENMP'
-            clang-tidy: ''
-          - distro: 'fedora:intel'
-            cxx: 'icpx'
-            cmake_build_type: 'Release'
-            backend: 'OPENMP'
-            clang-tidy: ''
-          - distro: 'fedora:intel'
-            cxx: 'icpx'
-            cmake_build_type: 'Debug'
-            backend: 'OPENMP'
-            clang-tidy: ''
-          - distro: 'ubuntu:latest'
-            cxx: 'clang++'
-            cmake_build_type: 'RelWithDebInfo'
-            backend: 'THREADS'
-            clang-tidy: '-DCMAKE_CXX_CLANG_TIDY="clang-tidy;-warnings-as-errors=*"'
-          - distro: 'ubuntu:latest'
-            cxx: 'g++'
-            cmake_build_type: 'RelWithDebInfo'
-            backend: 'THREADS'
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/kokkos/ci-containers/${{ matrix.distro }}
@@ -109,18 +79,8 @@ jobs:
       - name: Build
         run: |
           ccache -z
-          cmake --build builddir --parallel 2
+          cmake --build builddir --parallel 2 --target KokkosCore_PerformanceTest_Benchmark
           ccache -s
       - name: Tests
         working-directory: builddir
-        run: ctest --output-on-failure
-      - name: Test DESTDIR Install
-        run: DESTDIR=${PWD}/install cmake --build builddir --target install && rm -rf ${PWD}/install/usr && rmdir ${PWD}/install
-      - name: Install
-        run: sudo cmake --build builddir --target install
-      - name: Test install
-        working-directory: example/build_cmake_installed
-        run: |
-          cmake -B builddir -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
-          cmake --build builddir
-          cmake --build builddir --target test
+        run: ctest --output-on-failure -R KokkosCore_PerformanceTest_Benchmark
