@@ -20,6 +20,8 @@ jobs:
       image: ghcr.io/kokkos/ci-containers/${{ matrix.distro }}
       # see https://github.com/actions/virtual-environments/issues/3812
       options: --security-opt seccomp=unconfined
+    env:
+      BUILD_ID: ${{ matrix.distro }}-${{ matrix.cxx }}-${{ matrix.cmake_build_type }}-${{ matrix.backend }}
     steps:
       - name: Checkout desul
         uses: actions/checkout@v2.2.0
@@ -86,14 +88,14 @@ jobs:
         run: ctest --output-on-failure -R KokkosCore_PerformanceTest_Benchmark
       - name: Gather benchmark results
         run: |-
-          mkdir benchmark-results
-          find builddir/core/perf_test/ -name "*.json" -exec mv {} benchmark-results/  \;
+          mkdir ${{ env.BUILD_ID }}
+          find builddir/core/perf_test/ -name "*.json" -exec mv {} ${{ env.BUILD_ID }}/  \;
       - name: Push benchmark results
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source_file: 'benchmark-results'
+          source_file: ${{ env.BUILD_ID }}
           destination_repo: 'cz4rs/kokkos-benchmark-results'
           destination_branch: 'master'
           user_email: 'someone@some-mail.com'
