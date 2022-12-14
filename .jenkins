@@ -45,6 +45,11 @@ pipeline {
                                 -DKokkos_ENABLE_LIBDL=OFF \
                               .. && \
                               make -j8 KokkosCore_PerformanceTest_Benchmark && ctest --verbose -R KokkosCore_PerformanceTest_Benchmark'''
+                        sh '''GIT_BRANCH="${git branch --show-current}" \
+                              if [ "$GIT_BRANCH" == "performance-results-visualization" ]
+                              then
+                                  echo "Collect, process, push performance results"
+                              fi'''
                     }
                     post {
                         always {
