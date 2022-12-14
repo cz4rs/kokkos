@@ -99,5 +99,5 @@ jobs:
           source_file: ${{ env.BUILD_ID }}
           destination_repo: 'cz4rs/kokkos-benchmark-results'
           destination_branch: 'master'
-          user_email: 'someone@some-mail.com'
-          user_name: 'someone'
+          user_email: 'kokkos@users.noreply.github.com'
+          user_name: 'Kokkos Developers'
