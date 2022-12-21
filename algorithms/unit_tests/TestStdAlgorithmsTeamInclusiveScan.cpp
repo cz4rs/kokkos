@@ -219,8 +219,7 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
     const auto last  = KE::cend(srcRow);
 
     auto destRow         = Kokkos::subview(stdDestView, i, Kokkos::ALL());
-    const auto firstDest = KE::begin(destRow);
-
+    auto firstDest       = KE::begin(destRow);
     const auto initValue = initValuesView_h(i);
 
 #if defined(__GNUC__) && __GNUC__ == 8
@@ -232,8 +231,7 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
     switch (apiId) {
       case 0:
       case 1: {
-        auto it = inclusive_scan(first, last, firstDest);
-
+        auto it                       = inclusive_scan(first, last, firstDest);
         const std::size_t stdDistance = KE::distance(firstDest, it);
         EXPECT_EQ(stdDistance, distancesView_h(i));
 
@@ -243,7 +241,6 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
       case 2:
       case 3: {
         auto it = inclusive_scan(first, last, firstDest, binaryOp);
-
         const std::size_t stdDistance = KE::distance(firstDest, it);
         EXPECT_EQ(stdDistance, distancesView_h(i));
 
@@ -253,7 +250,6 @@ void test_A(std::size_t numTeams, std::size_t numCols, int apiId) {
       case 4:
       case 5: {
         auto it = inclusive_scan(first, last, firstDest, binaryOp, initValue);
-
         const std::size_t stdDistance = KE::distance(firstDest, it);
         EXPECT_EQ(stdDistance, distancesView_h(i));
 
