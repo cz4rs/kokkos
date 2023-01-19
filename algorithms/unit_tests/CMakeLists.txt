@@ -77,7 +77,6 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;HIP;SYCL;OpenMPTarget)
     foreach(Name
 	StdAlgorithmsCommon
 	StdAlgorithmsLexicographicalCompare
-	StdAlgorithmsForEach
 	StdAlgorithmsFind
 	StdAlgorithmsFindFirstOf
 	StdAlgorithmsFindEnd
@@ -188,3 +187,12 @@ if(NOT (KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL IntelLLVM
     SOURCES TestStdAlgorithmsCompileOnly.cpp
   )
 endif()
+
+INCLUDE(${KOKKOS_SRC_PATH}/cmake/kokkos_benchmarks.cmake)
+
+KOKKOS_ADD_BENCHMARK(
+  Benchmark_Kokkos_ForEach
+  SOURCES
+    BenchmarkStdAlgorithmsForEach.cpp
+    ${KOKKOS_SRC_PATH}/core/perf_test/BenchmarkMain.cpp
+)

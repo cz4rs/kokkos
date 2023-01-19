@@ -50,7 +50,7 @@ function(KOKKOS_ADD_BENCHMARK NAME)
   )
   target_link_libraries(
     ${BENCHMARK_NAME}
-    PRIVATE benchmark::benchmark Kokkos::kokkos impl_git_version
+    PRIVATE benchmark::benchmark Kokkos::kokkos impl_git_version ${KOKKOS_GTEST_LIB}
   )
   target_include_directories(
     ${BENCHMARK_NAME}
