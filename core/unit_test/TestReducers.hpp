@@ -384,8 +384,6 @@ struct TestReducers {
     }
 
     {
-      using member_type = typename Kokkos::TeamPolicy<ExecSpace>::member_type;
-
       Scalar sum_scalar;
       Kokkos::View<Scalar, ExecSpace> sum_view("result");
       Kokkos::deep_copy(sum_view, Scalar(1));
@@ -401,6 +399,8 @@ struct TestReducers {
       }
 
 #if 0
+      using member_type = typename Kokkos::TeamPolicy<ExecSpace>::member_type;
+
       Kokkos::parallel_for(
           Kokkos::TeamPolicy<ExecSpace>(1, 1),
           KOKKOS_LAMBDA(member_type team_member) {
