@@ -50,7 +50,9 @@ struct TestReducers {
     using member_type = typename Kokkos::TeamPolicy<ExecSpace>::member_type;
 
     KOKKOS_INLINE_FUNCTION
-    void operator()(const member_type& m, Scalar& value) const { if (m.team_rank() == m.team_size()-1) value += Scalar(1); }
+    void operator()(const member_type& m, Scalar& value) const {
+      if (m.team_rank() == m.team_size() - 1) value += Scalar(1);
+    }
   };
 
   struct ProdFunctor {
@@ -391,12 +393,12 @@ struct TestReducers {
       TeamSumFunctor tf;
 
       if constexpr (sizeof(Scalar) > 1) {
-	  auto team_pol = Kokkos::TeamPolicy<ExecSpace>(1024, 128);
-	  Kokkos::parallel_reduce(team_pol, tf, sum_view);
-	  Kokkos::deep_copy(sum_scalar, sum_view);
-	  std::cout << "Sum: " << sum_scalar << std::endl;
-	  ASSERT_EQ(sum_scalar, 1024);
-	}
+        auto team_pol = Kokkos::TeamPolicy<ExecSpace>(1024, 128);
+        Kokkos::parallel_reduce(team_pol, tf, sum_view);
+        Kokkos::deep_copy(sum_scalar, sum_view);
+        std::cout << "Sum: " << sum_scalar << std::endl;
+        ASSERT_EQ(sum_scalar, 1024);
+      }
 
 #if 0
       Kokkos::parallel_for(
