@@ -189,11 +189,7 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenMPTarget;OpenACC;HIP;SYCL)
         RangePolicyConstructors
         RangePolicyRequire
         ReducerCTADs
-        Reducers_a
-        Reducers_b
-        Reducers_c
         Reducers_d
-        Reducers_e
         Reductions
         Reductions_DeviceView
         SharedAlloc

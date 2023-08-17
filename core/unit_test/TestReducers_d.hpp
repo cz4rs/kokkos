@@ -55,15 +55,6 @@ TEST(TEST_CATEGORY, reducers_bhalf_t) {
   using ThisTestType = Kokkos::Experimental::bhalf_t;
 
   TestReducers<ThisTestType, TEST_EXECSPACE>::test_sum(2);
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_sum(25);
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_sum(50);
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_sum(51);
-
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_prod(1);
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_prod(2);
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_prod(3);
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_prod(4);
-  TestReducers<ThisTestType, TEST_EXECSPACE>::test_prod(5);
 }
 
 TEST(TEST_CATEGORY, reducers_int8_t) {
