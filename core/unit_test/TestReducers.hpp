@@ -392,7 +392,7 @@ struct TestReducers {
 
       if constexpr (sizeof(Scalar) > 1) {
         TeamSumFunctor tf;
-        auto team_pol = Kokkos::TeamPolicy<ExecSpace>(1024, 1);
+        auto team_pol = Kokkos::TeamPolicy<ExecSpace>(1024, Kokkos::AUTO);
         Kokkos::parallel_reduce(team_pol, tf, sum_view);
         Kokkos::deep_copy(sum_scalar, sum_view);
         ASSERT_EQ(sum_scalar, Scalar{1024});
@@ -400,7 +400,7 @@ struct TestReducers {
 
       if constexpr (sizeof(Scalar) == 1) {
         TeamSumFunctor tf;
-        auto team_pol = Kokkos::TeamPolicy<ExecSpace>(126, 1);
+        auto team_pol = Kokkos::TeamPolicy<ExecSpace>(126, Kokkos::AUTO);
         Kokkos::parallel_reduce(team_pol, tf, sum_view);
         Kokkos::deep_copy(sum_scalar, sum_view);
         ASSERT_EQ(sum_scalar, Scalar{126});
