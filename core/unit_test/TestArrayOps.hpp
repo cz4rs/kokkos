@@ -32,6 +32,47 @@ TEST(TEST_CATEGORY, array_capacity) {
 enum Enum { EZero, EOne };
 enum EnumShort : short { ESZero, ESOne };
 
+template <typename T>
+class ArrayOpsTest : public testing::Test {};
+
+TYPED_TEST_SUITE_P(ArrayOpsTest);
+
+TYPED_TEST_P(ArrayOpsTest, array_element_access) {
+  using A = Kokkos::Array<int, 2>;
+  A a{{3, 5}};
+  A const& ca = a;
+
+  size_t index         = 1;
+  TypeParam cast_index = static_cast<TypeParam>(index);
+
+  ASSERT_EQ(a[cast_index], a[index]);
+  ASSERT_EQ(ca[cast_index], a[index]);
+}
+
+TYPED_TEST_P(ArrayOpsTest, array_contiguous_element_access) {
+  int aa[] = {3, 5};
+  using A =
+      Kokkos::Array<int, KOKKOS_INVALID_INDEX, Kokkos::Array<>::contiguous>;
+  A a(aa, std::size(aa));
+  A const& ca = a;
+
+  size_t index         = 1;
+  TypeParam cast_index = static_cast<TypeParam>(index);
+
+  ASSERT_EQ(a[cast_index], aa[index]);
+  ASSERT_EQ(ca[cast_index], aa[index]);
+}
+
+REGISTER_TYPED_TEST_SUITE_P(ArrayOpsTest, array_element_access,
+                            array_contiguous_element_access);
+
+using MyTypes =
+    ::testing::Types<signed char, unsigned char, short, unsigned short, int,
+                     unsigned int, long, unsigned long, long long,
+                     unsigned long long, Enum, EnumShort>;
+
+INSTANTIATE_TYPED_TEST_SUITE_P(TEST_CATEGORY, ArrayOpsTest, MyTypes);
+
 TEST(TEST_CATEGORY, array_element_access) {
   using A = Kokkos::Array<int, 2>;
   A a{{3, 5}};
@@ -39,54 +80,6 @@ TEST(TEST_CATEGORY, array_element_access) {
 
   size_t index = 1;
   ASSERT_EQ(a[index], 5);
-
-  auto sc = static_cast<signed char>(index);
-  ASSERT_EQ(a[sc], a[index]);
-  ASSERT_EQ(ca[sc], a[index]);
-
-  auto uc = static_cast<unsigned char>(index);
-  ASSERT_EQ(a[uc], a[index]);
-  ASSERT_EQ(ca[uc], a[index]);
-
-  auto s = static_cast<short>(index);
-  ASSERT_EQ(a[s], a[index]);
-  ASSERT_EQ(ca[s], a[index]);
-
-  auto us = static_cast<unsigned short>(index);
-  ASSERT_EQ(a[us], a[index]);
-  ASSERT_EQ(ca[us], a[index]);
-
-  auto i = static_cast<int>(index);
-  ASSERT_EQ(a[i], a[index]);
-  ASSERT_EQ(ca[i], a[index]);
-
-  auto ui = static_cast<unsigned int>(index);
-  ASSERT_EQ(a[ui], a[index]);
-  ASSERT_EQ(ca[ui], a[index]);
-
-  auto l = static_cast<long>(index);
-  ASSERT_EQ(a[l], a[index]);
-  ASSERT_EQ(ca[l], a[index]);
-
-  auto ul = static_cast<unsigned long>(index);
-  ASSERT_EQ(a[ul], a[index]);
-  ASSERT_EQ(ca[ul], a[index]);
-
-  auto ll = static_cast<long long>(index);
-  ASSERT_EQ(a[ll], a[index]);
-  ASSERT_EQ(ca[ll], a[index]);
-
-  auto ull = static_cast<unsigned long long>(index);
-  ASSERT_EQ(a[ull], a[index]);
-  ASSERT_EQ(ca[ull], a[index]);
-
-  auto e = static_cast<Enum>(index);
-  ASSERT_EQ(a[e], a[index]);
-  ASSERT_EQ(ca[e], a[index]);
-
-  auto es = static_cast<EnumShort>(index);
-  ASSERT_EQ(a[es], a[index]);
-  ASSERT_EQ(ca[es], a[index]);
 
   ASSERT_EQ(a.data()[index], a[index]);
   ASSERT_EQ(ca.data()[index], a[index]);
@@ -138,54 +131,6 @@ TEST(TEST_CATEGORY, array_contiguous_element_access) {
 
   size_t index = 1;
   ASSERT_EQ(std::addressof(a[index]), std::addressof(aa[index]));
-
-  auto sc = static_cast<signed char>(index);
-  ASSERT_EQ(a[sc], aa[index]);
-  ASSERT_EQ(ca[sc], aa[index]);
-
-  auto uc = static_cast<unsigned char>(index);
-  ASSERT_EQ(a[uc], aa[index]);
-  ASSERT_EQ(ca[uc], aa[index]);
-
-  auto s = static_cast<short>(index);
-  ASSERT_EQ(a[s], aa[index]);
-  ASSERT_EQ(ca[s], aa[index]);
-
-  auto us = static_cast<unsigned short>(index);
-  ASSERT_EQ(a[us], aa[index]);
-  ASSERT_EQ(ca[us], aa[index]);
-
-  auto i = static_cast<int>(index);
-  ASSERT_EQ(a[i], aa[index]);
-  ASSERT_EQ(ca[i], aa[index]);
-
-  auto ui = static_cast<unsigned int>(index);
-  ASSERT_EQ(a[ui], aa[index]);
-  ASSERT_EQ(ca[ui], aa[index]);
-
-  auto l = static_cast<long>(index);
-  ASSERT_EQ(a[l], aa[index]);
-  ASSERT_EQ(ca[l], aa[index]);
-
-  auto ul = static_cast<unsigned long>(index);
-  ASSERT_EQ(a[ul], aa[index]);
-  ASSERT_EQ(ca[ul], aa[index]);
-
-  auto ll = static_cast<long long>(index);
-  ASSERT_EQ(a[ll], aa[index]);
-  ASSERT_EQ(ca[ll], aa[index]);
-
-  auto ull = static_cast<unsigned long long>(index);
-  ASSERT_EQ(a[ull], aa[index]);
-  ASSERT_EQ(ca[ull], aa[index]);
-
-  auto e = static_cast<Enum>(index);
-  ASSERT_EQ(a[e], aa[index]);
-  ASSERT_EQ(ca[e], aa[index]);
-
-  auto es = static_cast<EnumShort>(index);
-  ASSERT_EQ(a[es], aa[index]);
-  ASSERT_EQ(ca[es], aa[index]);
 
   ASSERT_EQ(a.data(), aa);
   ASSERT_EQ(ca.data(), aa);
