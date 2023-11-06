@@ -1,50 +1,27 @@
-/*
 //@HEADER
 // ************************************************************************
 //
-//                        Kokkos v. 3.0
-//       Copyright (2020) National Technology & Engineering
+//                        Kokkos v. 4.0
+//       Copyright (2022) National Technology & Engineering
 //               Solutions of Sandia, LLC (NTESS).
 //
 // Under the terms of Contract DE-NA0003525 with NTESS,
 // the U.S. Government retains certain rights in this software.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// Part of Kokkos, under the Apache License v2.0 with LLVM Exceptions.
+// See https://kokkos.org/LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY NTESS "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL NTESS OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Christian R. Trott (crtrott@sandia.gov)
-//
-// ************************************************************************
 //@HEADER
-*/
 
 /// \file Kokkos_Layout.hpp
 /// \brief Declaration of various \c MemoryLayout options.
 
+#ifndef KOKKOS_IMPL_PUBLIC_INCLUDE
+#include <Kokkos_Macros.hpp>
+static_assert(false,
+              "Including non-public Kokkos header files is not allowed.");
+#endif
 #ifndef KOKKOS_LAYOUT_HPP
 #define KOKKOS_LAYOUT_HPP
 
@@ -84,9 +61,14 @@ struct LayoutLeft {
   LayoutLeft& operator=(LayoutLeft&&) = default;
 
   KOKKOS_INLINE_FUNCTION
-  explicit constexpr LayoutLeft(size_t N0 = 0, size_t N1 = 0, size_t N2 = 0,
-                                size_t N3 = 0, size_t N4 = 0, size_t N5 = 0,
-                                size_t N6 = 0, size_t N7 = 0)
+  explicit constexpr LayoutLeft(size_t N0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                size_t N1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                size_t N2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                size_t N3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                size_t N4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                size_t N5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                size_t N6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                size_t N7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
       : dimension{N0, N1, N2, N3, N4, N5, N6, N7} {}
 
   friend bool operator==(const LayoutLeft& left, const LayoutLeft& right) {
@@ -128,9 +110,14 @@ struct LayoutRight {
   LayoutRight& operator=(LayoutRight&&) = default;
 
   KOKKOS_INLINE_FUNCTION
-  explicit constexpr LayoutRight(size_t N0 = 0, size_t N1 = 0, size_t N2 = 0,
-                                 size_t N3 = 0, size_t N4 = 0, size_t N5 = 0,
-                                 size_t N6 = 0, size_t N7 = 0)
+  explicit constexpr LayoutRight(size_t N0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                 size_t N1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                 size_t N2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                 size_t N3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                 size_t N4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                 size_t N5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                 size_t N6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG,
+                                 size_t N7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG)
       : dimension{N0, N1, N2, N3, N4, N5, N6, N7} {}
 
   friend bool operator==(const LayoutRight& left, const LayoutRight& right) {
@@ -177,7 +164,7 @@ struct LayoutStride {
     // Verify valid rank order:
     int check_input = ARRAY_LAYOUT_MAX_RANK < rank ? 0 : int(1 << rank) - 1;
     for (int r = 0; r < ARRAY_LAYOUT_MAX_RANK; ++r) {
-      tmp.dimension[r] = 0;
+      tmp.dimension[r] = KOKKOS_IMPL_CTOR_DEFAULT_ARG;
       tmp.stride[r]    = 0;
     }
     for (int r = 0; r < rank; ++r) {
@@ -195,12 +182,15 @@ struct LayoutStride {
   }
 
   KOKKOS_INLINE_FUNCTION
-  explicit constexpr LayoutStride(size_t N0 = 0, size_t S0 = 0, size_t N1 = 0,
-                                  size_t S1 = 0, size_t N2 = 0, size_t S2 = 0,
-                                  size_t N3 = 0, size_t S3 = 0, size_t N4 = 0,
-                                  size_t S4 = 0, size_t N5 = 0, size_t S5 = 0,
-                                  size_t N6 = 0, size_t S6 = 0, size_t N7 = 0,
-                                  size_t S7 = 0)
+  explicit constexpr LayoutStride(
+      size_t N0 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S0 = 0,
+      size_t N1 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S1 = 0,
+      size_t N2 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S2 = 0,
+      size_t N3 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S3 = 0,
+      size_t N4 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S4 = 0,
+      size_t N5 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S5 = 0,
+      size_t N6 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S6 = 0,
+      size_t N7 = KOKKOS_IMPL_CTOR_DEFAULT_ARG, size_t S7 = 0)
       : dimension{N0, N1, N2, N3, N4, N5, N6, N7}, stride{S0, S1, S2, S3,
                                                           S4, S5, S6, S7} {}
 

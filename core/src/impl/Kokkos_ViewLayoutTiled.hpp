@@ -1,46 +1,18 @@
-/*
 //@HEADER
 // ************************************************************************
 //
-//                        Kokkos v. 3.0
-//       Copyright (2020) National Technology & Engineering
+//                        Kokkos v. 4.0
+//       Copyright (2022) National Technology & Engineering
 //               Solutions of Sandia, LLC (NTESS).
 //
 // Under the terms of Contract DE-NA0003525 with NTESS,
 // the U.S. Government retains certain rights in this software.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
+// Part of Kokkos, under the Apache License v2.0 with LLVM Exceptions.
+// See https://kokkos.org/LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//
-// 2. Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in the
-// documentation and/or other materials provided with the distribution.
-//
-// 3. Neither the name of the Corporation nor the names of the
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY NTESS "AS IS" AND ANY
-// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL NTESS OR THE
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Questions? Contact Christian R. Trott (crtrott@sandia.gov)
-//
-// ************************************************************************
 //@HEADER
-*/
 
 #ifndef KOKKOS_EXPERIMENTAL_VIEWLAYOUTTILE_HPP
 #define KOKKOS_EXPERIMENTAL_VIEWLAYOUTTILE_HPP
@@ -184,7 +156,7 @@ struct ViewOffset<
 
   //----------------------------------------
 
-#define DEBUG_OUTPUT_CHECK 0
+#define KOKKOS_IMPL_DEBUG_OUTPUT_CHECK 0
 
   // Rank 2
   template <typename I0, typename I1>
@@ -201,7 +173,7 @@ struct ViewOffset<
                             : (((i0 & MASK_0) << SHIFT_1) + (i1 & MASK_1));
     //                     ( tile_dim[1] * li0         +  li1 )
 
-#if DEBUG_OUTPUT_CHECK
+#if KOKKOS_IMPL_DEBUG_OUTPUT_CHECK
     std::cout << "Am I Outer Left? "
               << (outer_pattern == (Kokkos::Iterate::Left)) << std::endl;
     std::cout << "Am I Inner Left? "
@@ -235,7 +207,7 @@ struct ViewOffset<
                             : (((i0 & MASK_0) << (SHIFT_2 + SHIFT_1)) +
                                ((i1 & MASK_1) << (SHIFT_2)) + (i2 & MASK_2));
 
-#if DEBUG_OUTPUT_CHECK
+#if KOKKOS_IMPL_DEBUG_OUTPUT_CHECK
     std::cout << "Am I Outer Left? "
               << (outer_pattern == (Kokkos::Iterate::Left)) << std::endl;
     std::cout << "Am I Inner Left? "
@@ -493,8 +465,14 @@ struct ViewOffset<
   //----------------------------------------
 
   KOKKOS_INLINE_FUNCTION constexpr array_layout layout() const {
-    return array_layout(m_dim.N0, m_dim.N1, m_dim.N2, m_dim.N2, m_dim.N3,
-                        m_dim.N4, m_dim.N5, m_dim.N6, m_dim.N7);
+    return array_layout((VORank > 0 ? m_dim.N0 : KOKKOS_INVALID_INDEX),
+                        (VORank > 1 ? m_dim.N1 : KOKKOS_INVALID_INDEX),
+                        (VORank > 2 ? m_dim.N2 : KOKKOS_INVALID_INDEX),
+                        (VORank > 3 ? m_dim.N3 : KOKKOS_INVALID_INDEX),
+                        (VORank > 4 ? m_dim.N4 : KOKKOS_INVALID_INDEX),
+                        (VORank > 5 ? m_dim.N5 : KOKKOS_INVALID_INDEX),
+                        (VORank > 6 ? m_dim.N6 : KOKKOS_INVALID_INDEX),
+                        (VORank > 7 ? m_dim.N7 : KOKKOS_INVALID_INDEX));
   }
 
   KOKKOS_INLINE_FUNCTION constexpr size_type dimension_0() const {
