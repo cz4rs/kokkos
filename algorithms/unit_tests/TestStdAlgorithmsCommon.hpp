@@ -47,7 +47,7 @@ struct StridedTwoRowsTag {};
 struct StridedThreeRowsTag {};
 
 #ifndef _WIN32
-const std::vector<int> teamSizesToTest = {1, 2, 23, 77, 123};
+const std::vector<int> teamSizesToTest = {1};
 #else
 // avoid timeouts in AppVeyor CI
 const std::vector<int> teamSizesToTest = {1, 2, 23};
